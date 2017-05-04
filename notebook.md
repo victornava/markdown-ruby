@@ -1,3 +1,5 @@
+# The Idea
+
 To convert from markdown to html we need:
 
     markdown -> tree -> html
@@ -101,3 +103,19 @@ The flow is something like this:
     </ul>
     
     <p>A <a href="http://example.com">link</a>.</p>
+
+# Resourses
+
+read: https://daringfireball.net/projects/markdown/basics
+
+# Test with
+
+    cat example.md | markdown --html4tags
+
+# History
+
+# 2017-05-04
+
+- Add the blockquote element
+- Use html4 tags
+- Refactor
