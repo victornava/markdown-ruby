@@ -3,10 +3,11 @@ require 'pry'
 class Parser
   class << self
     def parse(markdown)
-      chunks = markdown.lines.map(&:chomp)
-      chunks
-        .map { |chunk| [chunk].concat(identify(chunk)) }
-        .map do |chunk, tag, regexp|
+      markdown
+        .lines
+        .map(&:chomp)
+        .map do |chunk|
+          tag, regexp = identify(chunk)
           case tag
           when :blockquote
             { tag: tag.to_s, content: [{tag: 'p', content: chunk.scan(regexp)&.first&.first}] }
