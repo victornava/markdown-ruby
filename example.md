@@ -18,9 +18,9 @@ Horizontal rule:
 
 Bullet list:
 
-  * apples
-  * oranges
-  * pears
+  - apples
+  - oranges
+  - pears
 
 Numbered list:
 

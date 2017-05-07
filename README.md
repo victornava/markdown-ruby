@@ -6,10 +6,15 @@ Work in progress...
 
 # TODO
 
-- [x] generator handles simple cases
-- [ ] parser handles simple cases
-- [ ] nested cases
-- [ ] pretty format
+- [x] Paragraphs
+- [ ] Headings
+- [ ] Lists
+- [ ] Inline
+- [ ] Line Breaks
+- [ ] Rules
+- [ ] Code
+- [ ] Blockquote
+- [ ] Embedded HTML?
 
 ## Scope
 

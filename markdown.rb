@@ -1,11 +1,21 @@
 require 'pry'
 
+class Markdown
+  class << self
+    def to_html(md)
+      Generator.generate(
+        Parser.parse(md)
+      )
+    end
+  end
+end
+
 class Parser
   class << self
     def parse(markdown)
-      markdown
-        .lines
-        .map(&:chomp)
+      nodes = markdown
+        .split(/^\s*$/) # Split chunks by empty lines
+        .map { |chunk| chunk.gsub(/^\n+|\n+$/, '') }
         .map do |chunk|
           tag, regexp = identify(chunk)
           case tag
@@ -16,33 +26,37 @@ class Parser
           when :ul, :ol
             { tag: tag.to_s, content: [{tag: 'li', content: chunk.scan(regexp)&.first&.first}] }
           when :p
-            if chunk =~ /\s\s+$/
-              { tag: tag.to_s, content: chunk.split(/\s\s+$/).flat_map { |c| [c, { tag: 'br' } ] } }
-            else
+            # if chunk =~ /\s\s+$/
+              # { tag: tag.to_s, content: chunk.split(/\s\s+$/).flat_map { |c| [c, { tag: 'br' } ] } }
+            # else
               { tag: tag.to_s, content: chunk }
-            end
+            # end
           else
             { tag: tag.to_s, content: (chunk.scan(regexp)&.first&.first) }
           end
         end
+
+        { tag: 'html', content: nodes }
     end
 
+    def split_chunks(string)
+    end
 
     def identify(chunk)
       {
-        h1:         /^#[^#](.*)/     ,
-        h2:         /^##[^#](.*)/    ,
-        h3:         /^###[^#](.*)/   ,
-        h4:         /^####[^#](.*)/  ,
-        h5:         /^#####[^#](.*)/ ,
-        h6:         /^######[^#](.*)/,
-        blockquote: /^\>(.*)/        ,
-        code:       /^`(.*)`/        ,
-        em:         /^_(.*)_/        ,
-        strong:     /^\*\*(.*)\*\*/  ,
-        hr:         /^\-\-\-[\-\s]*/ ,
-        ul:         /^\-\s*(.*)/     ,
-        ol:         /^\d+\.\s*(.*)/  ,
+        # h1:         /^#[^#](.*)/     ,
+        # h2:         /^##[^#](.*)/    ,
+        # h3:         /^###[^#](.*)/   ,
+        # h4:         /^####[^#](.*)/  ,
+        # h5:         /^#####[^#](.*)/ ,
+        # h6:         /^######[^#](.*)/,
+        # blockquote: /^\>(.*)/        ,
+        # code:       /^`(.*)`/        ,
+        # em:         /^_(.*)_/        ,
+        # strong:     /^\*\*(.*)\*\*/  ,
+        # hr:         /^\-\-\-[\-\s]*/ ,
+        # ul:         /^\-\s*(.*)/     ,
+        # ol:         /^\d+\.\s*(.*)/  ,
         p:          /.*/             ,
       }.detect do |_, regexp|
         chunk =~ regexp
@@ -282,7 +296,7 @@ describe Parser do
       ['>BBQ'            , [{ tag: 'blockquote', content: [{ tag: 'p',  content: 'BBQ' }]}]],
       ['Break  '         , [{ tag: "p"         , content: ['Break', { tag: 'br'        }]}]],
     ].each do |input, target|
-      assert_equal target, Parser.parse(input), "Input: #{input} should produce #{target}"
+      assert_equal target, Parser.parse(input)[:content], "#{input} should produce #{target}"
     end
   end
 end
@@ -291,6 +305,17 @@ class String
   # http://api.rubyonrails.org/classes/String.html#method-i-strip_heredoc
   def strip_heredoc
     gsub(/^#{scan(/^[ \t]*(?=\S)/).min}/, "".freeze)
+  end
+end
+
+describe Markdown do
+  describe 'simple test' do
+    it 'paragraphs only 548728132021219' do
+      input  = File.read('example.md')
+      target = File.read('test-paragraphs-only.html')
+      # File.write('out.html', Markdown.to_html(input))
+      assert_equal Markdown.to_html(input), target
+    end
   end
 end
 

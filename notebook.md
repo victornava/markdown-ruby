@@ -277,26 +277,46 @@ how do we know that's what?
 
 the elements we have are:
 
+  paragraphs:  p
   headings:    h1 h2 h3 h4 h5 h6
-  rules:       hr
   lists:       ul, ol, li
-  line_breaks: br
   inline:      a, strong, em, img
+  line_breaks: br
+  rules:       hr
   code:        code
   blockquote:  blockquote
-  paragraphs:  p
 
 How do we know what's what?
 
 and empty line has no characters or only spaces
 
+- paragraphs      : one of more consecutive lines that end with an empty line or the end of the string and are not headings, rule, lists
 - headings        : are single lines that start with 1..6 hash (#) symbols then have anything
-- horizontal rule : are single lines that have 3 or more consecutive dashes (---) and maybe space
 - lists           : are one or more consecutive lines that start with a single dash
 - lines breaks    : are single lines INSIDE PARAGRAPHS that end with 2 or more spaces
-- paragraphs      : one of more consecutive lines that end with an empty line or the end of the string and are not headings, rule, lists
+- horizontal rule : are single lines that have 3 or more consecutive dashes (---) and maybe space
 
 
 This is more difficult than I thought :(
 
 However we're making progress...
+
+# 2017-05-07
+
+Actually let's do simple integration test...start with the simplest case and keep going.
+
+Let's split this into features, starting at the top and working our way down:
+
+1. Paragraphs
+2. Headings
+3. Lists
+4. Inline
+5. Line Breaks
+6. Rules
+7. Code
+8. Blockquote
+9. Embedded HTML?
+
+At each point we should have a working program. Even with minimal features.
+
+Done with Paragraphs. We have now very rudimentary converter that only handles Paragraphs.
