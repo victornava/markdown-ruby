@@ -3,9 +3,9 @@ require 'pry'
 class Markdown
   class << self
     def to_html(md)
-      Generator.generate(
-        Parser.parse(md)
-      )
+      parse_tree = Parser.parse(md)
+      # pp parse_tree
+      Generator.generate(parse_tree)
     end
   end
 end
@@ -13,15 +13,9 @@ end
 class Parser
   class << self
     def parse(markdown)
-      content =
-        split_into_chunks(markdown)
-          .flat_map { |chunk|
-            puts "-------------------------------------"
-            puts "split_into_blocks(#{chunk.inspect}) -> #{split_into_blocks(chunk)}"
-            split_into_blocks(chunk)
-          }
-
-      { tag: 'html', content: content }
+      chunks = split_into_chunks(markdown)
+      blocks = split_into_blocks(chunks)
+      { tag: 'html', content: blocks }
     end
 
     # String -> [String]
@@ -32,28 +26,30 @@ class Parser
     end
 
     # String -> [ElementHash]
-    def split_into_blocks(chunk)
+    def split_into_blocks(chunks)
+      chunks
+        .flat_map { |chunk| classify(chunk, 'h1', /^#[^#](.*)\n*$/)           }
+        .flat_map { |chunk| classify(chunk, 'h2', /^##[^#](.*)\n*$/)          }
+        .flat_map { |chunk| classify(chunk, 'h3', /^###[^#](.*)\n*$/)         }
+        .flat_map { |chunk| classify(chunk, 'h4', /^####[^#](.*)\n*$/)        }
+        .flat_map { |chunk| classify(chunk, 'h5', /^#####[^#](.*)\n*$/)       }
+        .flat_map { |chunk| classify(chunk, 'h6', /^######\s*(.*)\n*$/)       }
+        .flat_map { |chunk| classify(chunk, 'p',  /(.*)/m)                    }
+    end
+
+    # String -> [String|Tag(Hash)]
+    def classify(chunk, tag, regexp)
+      # puts "classify(#{chunk}, #{tag}, #{regexp})"
+      return chunk unless chunk.is_a?(String)
       if chunk.empty?
-        #puts "chunk.empty? #{chunk.empty?}"
         []
       else
-        h1_regexp = /^#\s*(.*)\n*$/
-        x, h1, rest =  chunk.partition(h1_regexp)
-        
-        #puts "x, h1, rest -> #{chunk.partition(h1_regexp).inspect}"
-        
-        if h1.empty?
-          #puts "h1.empty? #{h1.empty?}"
-          # it's a paragraph
-          p_tag = { tag: 'p', content: chunk }
-          [p_tag]
+        _, match, rest =  chunk.partition(regexp)
+        if match.empty?
+          [chunk]
         else
-          #puts "h1.empty? #{h1.empty?}"
-          
-          h1_tag = { tag: 'h1', content: chunk[h1_regexp, 1] }
-          
-          #puts "h1_tag #{h1_tag}"
-          [h1_tag].concat(split_into_blocks(rest))
+          tag = { tag: tag, content: chunk[regexp, 1] }
+          [tag].concat(classify(rest, tag, regexp))
         end
       end
     end
@@ -276,12 +272,12 @@ describe Parser do
   it 'parses single lines' do
     [ # Input               # Target
       ['# Heading 1'     , [{ tag: 'h1'    , content: 'Heading 1'   }]],
-      # ['## Heading 2'    , [{ tag: 'h2'    , content: 'Heading 2'   }]],
-      # ['### Heading 3'   , [{ tag: 'h3'    , content: 'Heading 3'   }]],
-      # ['#### Heading 4'  , [{ tag: 'h4'    , content: 'Heading 4'   }]],
-      # ['##### Heading 5' , [{ tag: 'h5'    , content: 'Heading 5'   }]],
-      # ['###### Heading 6', [{ tag: 'h6'    , content: 'Heading 6'   }]],
-      # ['Paragraph'       , [{ tag: 'p'     , content: 'Paragraph'   }]],
+      ['## Heading 2'    , [{ tag: 'h2'    , content: 'Heading 2'   }]],
+      ['### Heading 3'   , [{ tag: 'h3'    , content: 'Heading 3'   }]],
+      ['#### Heading 4'  , [{ tag: 'h4'    , content: 'Heading 4'   }]],
+      ['##### Heading 5' , [{ tag: 'h5'    , content: 'Heading 5'   }]],
+      ['###### Heading 6', [{ tag: 'h6'    , content: 'Heading 6'   }]],
+      ['Paragraph'       , [{ tag: 'p'     , content: 'Paragraph'   }]],
       # ['`Code`'          , [{ tag: 'code'  , content: 'Code'        }]],
       # ['_Italic_'        , [{ tag: 'em'    , content: 'Italic'      }]],
       # ['**Strong**'      , [{ tag: 'strong', content: 'Strong'      }]],

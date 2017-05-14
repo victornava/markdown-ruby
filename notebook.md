@@ -323,7 +323,10 @@ Done with Paragraphs. We have now very rudimentary converter that only handles P
 
 # 2017-05-14
 
-Todays plan is to augment our rudimentary markdown converter to handle the rest headings and lists.
+Todays plan is to expand our rudimentary markdown converter to handle:
+
+  - headings
+  - lists
 
 Let's start with h1
 
@@ -433,3 +436,7 @@ or
 so first we could just take the string and split by the h1 regexp then replace the h1 string by h1 hashes then the remaning parts of the list that are string and turning then into p hashes. Lets try that.
 
 That worked.
+
+Now add h2.
+
+Done with headings. No time to do lists
