@@ -3,9 +3,7 @@ require 'pry'
 class Markdown
   class << self
     def to_html(md)
-      parse_tree = Parser.parse(md)
-      # pp parse_tree
-      Generator.generate(parse_tree)
+      Generator.generate(Parser.parse(md))
     end
   end
 end
@@ -15,31 +13,29 @@ class Parser
     def parse(markdown)
       chunks = split_into_chunks(markdown)
       blocks = split_into_blocks(chunks)
-      { tag: 'html', content: blocks }
+      tree   = split_into_inlines(blocks)
+      { tag: 'html', content: tree }
     end
 
-    # String -> [String]
     def split_into_chunks(markdown)
       markdown
         .split(/^\s*$/)                      # split by empty lines
         .map { |x| x.gsub(/^\n+|\n+$/, '') } # remove new lines from start or end
     end
 
-    # String -> [ElementHash]
     def split_into_blocks(chunks)
       chunks
-        .flat_map { |chunk| classify(chunk, 'h1', /^#[^#](.*)\n*$/)           }
-        .flat_map { |chunk| classify(chunk, 'h2', /^##[^#](.*)\n*$/)          }
-        .flat_map { |chunk| classify(chunk, 'h3', /^###[^#](.*)\n*$/)         }
-        .flat_map { |chunk| classify(chunk, 'h4', /^####[^#](.*)\n*$/)        }
-        .flat_map { |chunk| classify(chunk, 'h5', /^#####[^#](.*)\n*$/)       }
-        .flat_map { |chunk| classify(chunk, 'h6', /^######\s*(.*)\n*$/)       }
-        .flat_map { |chunk| classify(chunk, 'p',  /(.*)/m)                    }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'h1', /^#[^#](.*)(?=$)/)           }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'h2', /^##[^#](.*)(?=$)/)          }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'h3', /^###[^#](.*)(?=$)/)         }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'h4', /^####[^#](.*)(?=$)/)        }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'h5', /^#####[^#](.*)(?=$)/)       }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'h6', /^######\s*(.*)(?=$)/)       }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'ul', /^\s*(\-[^-]+.*)(?!=\-])/m)  } # TODO Review, looks wrong.
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'p',  /(.*)/m)                     }
     end
 
-    # String -> [String|Tag(Hash)]
-    def classify(chunk, tag, regexp)
-      # puts "classify(#{chunk}, #{tag}, #{regexp})"
+    def chunk_to_nodes(chunk, tag, regexp)
       return chunk unless chunk.is_a?(String)
       if chunk.empty?
         []
@@ -48,9 +44,16 @@ class Parser
         if match.empty?
           [chunk]
         else
-          tag = { tag: tag, content: chunk[regexp, 1] }
-          [tag].concat(classify(rest, tag, regexp))
+          node = { tag: tag, content: chunk[regexp, 1] }
+          [node].concat(chunk_to_nodes(rest, tag, regexp))
         end
+      end
+    end
+
+    def split_into_inlines(blocks)
+      blocks.map do |block|
+        content = chunk_to_nodes(block[:content], 'li', /^\s*\-\s+(.*)\n*$/)
+        block.merge(content: content)
       end
     end
   end
@@ -271,24 +274,34 @@ end
 describe Parser do
   it 'parses single lines' do
     [ # Input               # Target
-      ['# Heading 1'     , [{ tag: 'h1'    , content: 'Heading 1'   }]],
-      ['## Heading 2'    , [{ tag: 'h2'    , content: 'Heading 2'   }]],
-      ['### Heading 3'   , [{ tag: 'h3'    , content: 'Heading 3'   }]],
-      ['#### Heading 4'  , [{ tag: 'h4'    , content: 'Heading 4'   }]],
-      ['##### Heading 5' , [{ tag: 'h5'    , content: 'Heading 5'   }]],
-      ['###### Heading 6', [{ tag: 'h6'    , content: 'Heading 6'   }]],
-      ['Paragraph'       , [{ tag: 'p'     , content: 'Paragraph'   }]],
-      # ['`Code`'          , [{ tag: 'code'  , content: 'Code'        }]],
-      # ['_Italic_'        , [{ tag: 'em'    , content: 'Italic'      }]],
-      # ['**Strong**'      , [{ tag: 'strong', content: 'Strong'      }]],
-      # ['---'             , [{ tag: "hr"                             }]],
-      # ['- uno'           , [{ tag: 'ul'        , content: [{ tag: 'li', content: 'uno' }]}]],
-      # ['1. uno'          , [{ tag: 'ol'        , content: [{ tag: 'li', content: 'uno' }]}]],
-      # ['>BBQ'            , [{ tag: 'blockquote', content: [{ tag: 'p',  content: 'BBQ' }]}]],
-      # ['Break  '         , [{ tag: "p"         , content: ['Break', { tag: 'br'        }]}]],
+      ['# Heading 1'     , [{ tag: 'h1'    , content: ['Heading 1'] }]],
+      ['## Heading 2'    , [{ tag: 'h2'    , content: ['Heading 2'] }]],
+      ['### Heading 3'   , [{ tag: 'h3'    , content: ['Heading 3'] }]],
+      ['#### Heading 4'  , [{ tag: 'h4'    , content: ['Heading 4'] }]],
+      ['##### Heading 5' , [{ tag: 'h5'    , content: ['Heading 5'] }]],
+      ['###### Heading 6', [{ tag: 'h6'    , content: ['Heading 6'] }]],
+      ['Paragraph'       , [{ tag: 'p'     , content: ['Paragraph'] }]],
     ].each do |input, target|
       assert_equal target, Parser.parse(input)[:content], "#{input} should produce #{target}"
     end
+  end
+
+  it 'parses simple unordered lists' do
+    input = <<-MARKDOWN.strip_heredoc
+      - apples
+      - oranges
+      - pears
+    MARKDOWN
+
+    target = [{
+      tag: "ul", content: [
+        { tag: "li", content: "apples"  },
+        { tag: "li", content: "oranges" },
+        { tag: "li", content: "pears"   }
+      ]
+    }]
+
+    Parser.parse(input)[:content].must_equal(target)
   end
 end
 # Test Helpers

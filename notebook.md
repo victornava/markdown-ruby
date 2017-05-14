@@ -435,8 +435,8 @@ or
 
 so first we could just take the string and split by the h1 regexp then replace the h1 string by h1 hashes then the remaning parts of the list that are string and turning then into p hashes. Lets try that.
 
-That worked.
+That worked
 
-Now add h2.
+Done with headings
 
-Done with headings. No time to do lists
+Done with unordered list

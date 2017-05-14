@@ -7,7 +7,7 @@ Work in progress...
 # TODO
 
 - [x] Paragraphs
-- [ ] Headings
+- [x] Headings
 - [ ] Lists
 - [ ] Inline
 - [ ] Line Breaks
