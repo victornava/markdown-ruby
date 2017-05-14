@@ -13,53 +13,48 @@ end
 class Parser
   class << self
     def parse(markdown)
-      nodes = markdown
-        .split(/^\s*$/) # Split chunks by empty lines
-        .map { |chunk| chunk.gsub(/^\n+|\n+$/, '') }
-        .map do |chunk|
-          tag, regexp = identify(chunk)
-          case tag
-          when :blockquote
-            { tag: tag.to_s, content: [{tag: 'p', content: chunk.scan(regexp)&.first&.first}] }
-          when :hr
-            { tag: tag.to_s }
-          when :ul, :ol
-            { tag: tag.to_s, content: [{tag: 'li', content: chunk.scan(regexp)&.first&.first}] }
-          when :p
-            # if chunk =~ /\s\s+$/
-              # { tag: tag.to_s, content: chunk.split(/\s\s+$/).flat_map { |c| [c, { tag: 'br' } ] } }
-            # else
-              { tag: tag.to_s, content: chunk }
-            # end
-          else
-            { tag: tag.to_s, content: (chunk.scan(regexp)&.first&.first) }
-          end
+      content =
+        split_into_chunks(markdown)
+          .flat_map { |chunk|
+            puts "-------------------------------------"
+            puts "split_into_blocks(#{chunk.inspect}) -> #{split_into_blocks(chunk)}"
+            split_into_blocks(chunk)
+          }
+
+      { tag: 'html', content: content }
+    end
+
+    # String -> [String]
+    def split_into_chunks(markdown)
+      markdown
+        .split(/^\s*$/)                      # split by empty lines
+        .map { |x| x.gsub(/^\n+|\n+$/, '') } # remove new lines from start or end
+    end
+
+    # String -> [ElementHash]
+    def split_into_blocks(chunk)
+      if chunk.empty?
+        #puts "chunk.empty? #{chunk.empty?}"
+        []
+      else
+        h1_regexp = /^#\s*(.*)\n*$/
+        x, h1, rest =  chunk.partition(h1_regexp)
+        
+        #puts "x, h1, rest -> #{chunk.partition(h1_regexp).inspect}"
+        
+        if h1.empty?
+          #puts "h1.empty? #{h1.empty?}"
+          # it's a paragraph
+          p_tag = { tag: 'p', content: chunk }
+          [p_tag]
+        else
+          #puts "h1.empty? #{h1.empty?}"
+          
+          h1_tag = { tag: 'h1', content: chunk[h1_regexp, 1] }
+          
+          #puts "h1_tag #{h1_tag}"
+          [h1_tag].concat(split_into_blocks(rest))
         end
-
-        { tag: 'html', content: nodes }
-    end
-
-    def split_chunks(string)
-    end
-
-    def identify(chunk)
-      {
-        # h1:         /^#[^#](.*)/     ,
-        # h2:         /^##[^#](.*)/    ,
-        # h3:         /^###[^#](.*)/   ,
-        # h4:         /^####[^#](.*)/  ,
-        # h5:         /^#####[^#](.*)/ ,
-        # h6:         /^######[^#](.*)/,
-        # blockquote: /^\>(.*)/        ,
-        # code:       /^`(.*)`/        ,
-        # em:         /^_(.*)_/        ,
-        # strong:     /^\*\*(.*)\*\*/  ,
-        # hr:         /^\-\-\-[\-\s]*/ ,
-        # ul:         /^\-\s*(.*)/     ,
-        # ol:         /^\d+\.\s*(.*)/  ,
-        p:          /.*/             ,
-      }.detect do |_, regexp|
-        chunk =~ regexp
       end
     end
   end
@@ -281,20 +276,20 @@ describe Parser do
   it 'parses single lines' do
     [ # Input               # Target
       ['# Heading 1'     , [{ tag: 'h1'    , content: 'Heading 1'   }]],
-      ['## Heading 2'    , [{ tag: 'h2'    , content: 'Heading 2'   }]],
-      ['### Heading 3'   , [{ tag: 'h3'    , content: 'Heading 3'   }]],
-      ['#### Heading 4'  , [{ tag: 'h4'    , content: 'Heading 4'   }]],
-      ['##### Heading 5' , [{ tag: 'h5'    , content: 'Heading 5'   }]],
-      ['###### Heading 6', [{ tag: 'h6'    , content: 'Heading 6'   }]],
-      ['Paragraph'       , [{ tag: 'p'     , content: 'Paragraph'   }]],
-      ['`Code`'          , [{ tag: 'code'  , content: 'Code'        }]],
-      ['_Italic_'        , [{ tag: 'em'    , content: 'Italic'      }]],
-      ['**Strong**'      , [{ tag: 'strong', content: 'Strong'      }]],
-      ['---'             , [{ tag: "hr"                             }]],
-      ['- uno'           , [{ tag: 'ul'        , content: [{ tag: 'li', content: 'uno' }]}]],
-      ['1. uno'          , [{ tag: 'ol'        , content: [{ tag: 'li', content: 'uno' }]}]],
-      ['>BBQ'            , [{ tag: 'blockquote', content: [{ tag: 'p',  content: 'BBQ' }]}]],
-      ['Break  '         , [{ tag: "p"         , content: ['Break', { tag: 'br'        }]}]],
+      # ['## Heading 2'    , [{ tag: 'h2'    , content: 'Heading 2'   }]],
+      # ['### Heading 3'   , [{ tag: 'h3'    , content: 'Heading 3'   }]],
+      # ['#### Heading 4'  , [{ tag: 'h4'    , content: 'Heading 4'   }]],
+      # ['##### Heading 5' , [{ tag: 'h5'    , content: 'Heading 5'   }]],
+      # ['###### Heading 6', [{ tag: 'h6'    , content: 'Heading 6'   }]],
+      # ['Paragraph'       , [{ tag: 'p'     , content: 'Paragraph'   }]],
+      # ['`Code`'          , [{ tag: 'code'  , content: 'Code'        }]],
+      # ['_Italic_'        , [{ tag: 'em'    , content: 'Italic'      }]],
+      # ['**Strong**'      , [{ tag: 'strong', content: 'Strong'      }]],
+      # ['---'             , [{ tag: "hr"                             }]],
+      # ['- uno'           , [{ tag: 'ul'        , content: [{ tag: 'li', content: 'uno' }]}]],
+      # ['1. uno'          , [{ tag: 'ol'        , content: [{ tag: 'li', content: 'uno' }]}]],
+      # ['>BBQ'            , [{ tag: 'blockquote', content: [{ tag: 'p',  content: 'BBQ' }]}]],
+      # ['Break  '         , [{ tag: "p"         , content: ['Break', { tag: 'br'        }]}]],
     ].each do |input, target|
       assert_equal target, Parser.parse(input)[:content], "#{input} should produce #{target}"
     end
@@ -309,12 +304,13 @@ class String
 end
 
 describe Markdown do
-  describe 'simple test' do
-    it 'paragraphs only 548728132021219' do
+  describe 'simple markdown' do
+    it 'handles paragraphs and h1' do
       input  = File.read('example.md')
-      target = File.read('test-paragraphs-only.html')
-      # File.write('out.html', Markdown.to_html(input))
-      assert_equal Markdown.to_html(input), target
+      target = File.read('example.html')
+      output = Markdown.to_html(input)
+      File.write 'out.html', output
+      assert_equal target, output
     end
   end
 end

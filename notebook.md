@@ -320,3 +320,116 @@ Let's split this into features, starting at the top and working our way down:
 At each point we should have a working program. Even with minimal features.
 
 Done with Paragraphs. We have now very rudimentary converter that only handles Paragraphs.
+
+# 2017-05-14
+
+Todays plan is to augment our rudimentary markdown converter to handle the rest headings and lists.
+
+Let's start with h1
+
+We're currently splitting the input into chunks that are separated by empty lines. And de idea was that because we're just know about paragraphs we identify every chunk as a paragraph.
+
+But now that we need to identify parts of the chunks as headings we need a way to split the chunks into other elements. The idea is that we split the input into chunks then chunks into block elements then block elements into inline elements so the overall structure would be something like this:
+
+chunks are composed of block elements
+blocks are composed of content (text) or inline elements
+inline elements are composed of content or inline elements
+
+    chunk -> blocks -> inline elements
+                    -> content
+
+inline elements are always inside block elements
+content elements are always inside block elements
+
+Ok, but let's not get ahead, let's focus on headings.
+
+What's a heading?
+
+    # heading 1
+
+That's a heading (h1)
+
+And how do we know that that's a headings?
+
+Because the line begins with a hash.
+
+Are there other types of headings?
+
+Yes. There is h2, h3, h4, h5 and h6. Bud let's not get ahead.
+
+H1's are pieces of text that:
+    
+    - start on a new line
+    - the first character is a `#`
+    - end at the end of the line
+
+or expressed in regexp:
+
+    ^#(.*)$
+
+ok let's try that.
+
+    # heading 1
+
+should produce:
+
+    [{ tag: 'h1' , content: 'Heading 1' }]
+
+that that worded, except that we should markdown strips spaces before words. But should we do this at the parse level, or should be process the content in the generator?
+
+It's seems easy to do it here, so let's go ahead.
+
+That works.
+
+However we're ran into a problem:
+
+Our current process goes like this
+
+    take the input
+    split it into chunks
+    identify each chunk as either a paragraph of h1
+
+the problem with this is that, a chunk can have multiple lines, so it can have paragraphs and headings, so we need to create have a process for splitting chunks into blocks.
+
+Processing the chunk line by line works well with headings but not with paragraphs.
+
+Because paragraphs can span multiple lines.
+
+Take this chunk for example:
+
+      # Heading
+      Paragraphs are separated
+      by a blank line.
+
+or
+
+    # Heading\nParagraphs are separated\nby a blank line.
+
+if we proces line by line we get:
+
+    h1: Heading
+    p:  Paragraphs are separated
+    p:  by a blank line.
+
+but we want:
+
+    h1: Heading
+    p:  Paragraphs are separated•by a blank line.
+
+So we need a function that takes a chunk and tells us where headings are and where paragraphs are.
+
+The first thing that comes to mind is:
+
+take a chunk and identify where the headings are and assume every other part is a p
+
+    chunk -> (split_into_blocks) -> [{h1: Heading}, {p: "Paragraphs are separated•by a blank line."}]
+
+So the function takes a string and returns a list of hashes representing headings or paragraphs
+
+or
+
+    chunk -> (split_into_blocks) -> [Hash]
+
+so first we could just take the string and split by the h1 regexp then replace the h1 string by h1 hashes then the remaning parts of the list that are string and turning then into p hashes. Lets try that.
+
+That worked.
