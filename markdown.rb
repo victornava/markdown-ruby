@@ -9,10 +9,10 @@ end
 class Parser
   class << self
     def parse(markdown)
-      chunks = split_into_chunks(markdown)
-      blocks = split_into_blocks(chunks)
-      tree   = split_into_inlines(blocks)
-      { tag: 'html', content: tree }
+      {
+        tag: 'html',
+        content: split_into_blocks(split_into_chunks(markdown))
+      }
     end
 
     def split_into_chunks(markdown)
@@ -23,14 +23,21 @@ class Parser
 
     def split_into_blocks(chunks)
       chunks
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'h1', /^#[^#](.*)(?=$)/)           }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'h2', /^##[^#](.*)(?=$)/)          }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'h3', /^###[^#](.*)(?=$)/)         }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'h4', /^####[^#](.*)(?=$)/)        }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'h5', /^#####[^#](.*)(?=$)/)       }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'h6', /^######\s*(.*)(?=$)/)       }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'ul', /^\s*(\-[^-]+.*)(?!=\-\])/m) } # TODO Review, looks wrong.
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'p',  /(.*)/m)                     }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'h1', /^#[^#](.*)(?=$)/)                 }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'h2', /^##[^#](.*)(?=$)/)                }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'h3', /^###[^#](.*)(?=$)/)               }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'h4', /^####[^#](.*)(?=$)/)              }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'h5', /^#####[^#](.*)(?=$)/)             }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'h6', /^######\s*(.*)(?=$)/)             }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'ul', /^\s*(\-[^-]+.*)(?!=\-\])/m)       } # TODO Review, looks wrong.
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'ol', /^\s*(\d+\..*)(?!=\d+\.\])/m)      } # TODO Review, looks wrong.
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'p',  /(.*)/m)                           }
+    end
+
+    def split_into_inlines(chunk)
+      [chunk]
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'li', /^\s*\-\s+(.*)\n?$/)    }
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'li', /^\s*\d+\.\s?(.*)\n?$/) }
     end
 
     def chunk_to_nodes(chunk, tag, regexp)
@@ -42,16 +49,9 @@ class Parser
         if match.empty?
           [chunk]
         else
-          node = { tag: tag, content: chunk[regexp, 1] }
+          node = { tag: tag, content: split_into_inlines(chunk[regexp, 1]) }
           [node].concat(chunk_to_nodes(rest, tag, regexp))
         end
-      end
-    end
-
-    def split_into_inlines(blocks)
-      blocks.map do |block|
-        content = chunk_to_nodes(block[:content], 'li', /^\s*\-\s+(.*)\n*$/)
-        block.merge(content: content)
       end
     end
   end
@@ -295,9 +295,28 @@ class MardownTest < Minitest::Spec
 
       target = [{
         tag: "ul", content: [
-          { tag: "li", content: "apples"  },
-          { tag: "li", content: "oranges" },
-          { tag: "li", content: "pears"   }
+          { tag: "li", content: ["apples"]  },
+          { tag: "li", content: ["oranges"] },
+          { tag: "li", content: ["pears"]   }
+        ]
+      }]
+
+      Parser.parse(input)[:content].must_equal(target)
+    end
+
+
+    it 'parses simple ordered lists' do
+      input = <<-MARKDOWN.strip_heredoc
+        1. apples
+        2. oranges
+        3. pears
+      MARKDOWN
+
+      target = [{
+        tag: "ol", content: [
+          { tag: "li", content: ["apples"]  },
+          { tag: "li", content: ["oranges"] },
+          { tag: "li", content: ["pears"]   }
         ]
       }]
 
@@ -311,7 +330,7 @@ class MardownTest < Minitest::Spec
         input  = File.read('example.md')
         target = File.read('example.html')
         output = Markdown.to_html(input)
-        File.write 'out.html', output
+        # File.write 'out.html', output
         assert_equal target, output
       end
     end

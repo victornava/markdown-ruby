@@ -8,7 +8,7 @@ Work in progress...
 
 - [x] Paragraphs
 - [x] Headings
-- [ ] Lists
+- [x] Lists
 - [ ] Inline
 - [ ] Line Breaks
 - [ ] Rules

@@ -1,7 +1,3 @@
-Heading
-## Sub-heading
-### Another deeper heading
-
 # The Idea
 
 To convert from markdown to html we need:
@@ -24,7 +20,7 @@ a node is a hash with:
     {
       tag: string
       content: string | hash | array
-      props: hash (key, value pairs)
+      props: hash (key-value pairs)
     }
 
 a node can contain either content (string), or a list of nodes (hash)
@@ -440,3 +436,68 @@ That worked
 Done with headings
 
 Done with unordered list
+
+# 2017-05-21
+
+here
+
+    .flat_map { |chunk| chunk_to_nodes(chunk, 'ul', /^\s*(\-[^-]+.*)(?!=\-\])/m) } # TODO Review, looks wrong.
+
+try replacing the regexp with
+
+    /^\s*(\-[^-]+.*)(?!=^\s*\-[^-]+)/m
+
+Maybe the structure is:
+
+beginning of match, content , end of match
+
+in this case we could transform the regexp to
+
+    /
+    ^\s*\-(?!=\-) start:   starts with beinging then maybe spaces, followed by a dash, not followed by a dash
+    (.*)          content: anything
+    ^\s*\-(?!=\-) end:     same as start
+    /
+
+# TODO Can we generalize this and say:
+
+> A regular expresion to parse a chunk of text has three parts: start, content and end
+
+or
+
+> A regular expresion to parse a chunk of text has three capture groups: (start)(content)(end)
+
+
+but before we do that, let's be done with lists.
+
+Next: Ordered list
+
+Another thing that needs to be done is to simplify the ParseTree structure. Previously the definition was like this:
+
+    {
+      tag: string
+      content: string | hash | array
+      props: hash (key-value pairs)
+    }
+
+But as we progress, it seems like the `content` is always a list like so:
+
+    {
+      tag: string
+      content: [string | hash | array]
+      props: hash (key-value pairs)
+    }
+
+The initial idea was that we could that some content would only have strings, but if we are already handling the case of arrays of string, the that becomes an optimisation which we don't want to do right now, so a node in a parse tree that previously would like this:
+
+    { tag: "h1", content: "Heading" }
+
+Will become:
+
+    { tag: "h1", content: ["Heading"] }
+
+What is the gain?
+
+None yet. Tried that and it only seems to complicate things. Let's keep going we what we have.
+
+Done with ordered lists.
