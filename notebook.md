@@ -501,3 +501,24 @@ What is the gain?
 None yet. Tried that and it only seems to complicate things. Let's keep going we what we have.
 
 Done with ordered lists.
+
+# Next is inline elements
+
+these are:
+
+- [x] li
+- [x] strong
+- [ ] em
+- [ ] a
+- [ ] code
+
+`li` is done
+
+Next is `strong`
+
+Should be as simple as adding an inline matcher, let's try.
+
+Done with `strong`
+
+Next is `em`
+

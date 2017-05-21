@@ -28,8 +28,9 @@ class Parser
     ]
 
     INLINE_MATCHERS = [
-      { tag: 'li', regexp: /^\s*\-\s+(.*)\n?$/          },
-      { tag: 'li', regexp: /^\s*\d+\.\s?(.*)\n?$/       },
+      { tag: 'li'    , regexp: /^\s*\-\s+(.*)\n?$/          },
+      { tag: 'li'    , regexp: /^\s*\d+\.\s?(.*)\n?$/       },
+      { tag: 'strong', regexp: /\*\*(.*)\*\*/               },
     ]
 
     def split_into_chunks(markdown)
@@ -59,12 +60,16 @@ class Parser
       if chunk.empty?
         []
       else
-        _, match, rest =  chunk.partition(regexp)
+        before, match, rest =  chunk.partition(regexp)
         if match.empty?
           [chunk]
         else
           node = { tag: tag, content: split_into_inlines(chunk[regexp, 1]) }
-          [node].concat(chunk_to_nodes(rest, tag, regexp))
+          if before.chomp.empty?
+            [node].concat(chunk_to_nodes(rest, tag, regexp))
+          else
+            [before, node].concat(chunk_to_nodes(rest, tag, regexp))
+          end
         end
       end
     end
@@ -193,7 +198,7 @@ SIMPLE_PARSE_TREE = {
   ]
 }
 
-# puts Generator.process_node(SIMPLE_PARSE_TREE)
+# puts Generator.process_node(SIMPLE_PARSE_TREE)q
 
 # Test
 require 'pry'
@@ -288,13 +293,14 @@ class MardownTest < Minitest::Spec
   describe Parser do
     it 'parses single lines' do
       [ # Input               # Target
-        ['# Heading 1'     , [{ tag: 'h1'    , content: ['Heading 1'] }]],
-        ['## Heading 2'    , [{ tag: 'h2'    , content: ['Heading 2'] }]],
-        ['### Heading 3'   , [{ tag: 'h3'    , content: ['Heading 3'] }]],
-        ['#### Heading 4'  , [{ tag: 'h4'    , content: ['Heading 4'] }]],
-        ['##### Heading 5' , [{ tag: 'h5'    , content: ['Heading 5'] }]],
-        ['###### Heading 6', [{ tag: 'h6'    , content: ['Heading 6'] }]],
-        ['Paragraph'       , [{ tag: 'p'     , content: ['Paragraph'] }]],
+        ['# Heading 1'       , [{ tag: 'h1', content: ['Heading 1'] }]],
+        ['## Heading 2'      , [{ tag: 'h2', content: ['Heading 2'] }]],
+        ['### Heading 3'     , [{ tag: 'h3', content: ['Heading 3'] }]],
+        ['#### Heading 4'    , [{ tag: 'h4', content: ['Heading 4'] }]],
+        ['##### Heading 5'   , [{ tag: 'h5', content: ['Heading 5'] }]],
+        ['###### Heading 6'  , [{ tag: 'h6', content: ['Heading 6'] }]],
+        ['Paragraph'         , [{ tag: 'p' , content: ['Paragraph'] }]],
+        ['a **Strong** line' , [{ tag: 'p' , content: ['a ', { tag: "strong", content: ["Strong"] }, ' line'] }]],
       ].each do |input, target|
         assert_equal target, Parser.parse(input)[:content], "#{input} should produce #{target}"
       end
@@ -344,7 +350,7 @@ class MardownTest < Minitest::Spec
         input  = File.read('example.md')
         target = File.read('example.html')
         output = Markdown.to_html(input)
-        # File.write 'out.html', output
+        # File.write('out.html', output)
         assert_equal target, output
       end
     end
