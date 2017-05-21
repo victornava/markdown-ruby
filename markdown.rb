@@ -1,5 +1,3 @@
-require 'pry'
-
 class Markdown
   class << self
     def to_html(md)
@@ -31,7 +29,7 @@ class Parser
         .flat_map { |chunk| chunk_to_nodes(chunk, 'h4', /^####[^#](.*)(?=$)/)        }
         .flat_map { |chunk| chunk_to_nodes(chunk, 'h5', /^#####[^#](.*)(?=$)/)       }
         .flat_map { |chunk| chunk_to_nodes(chunk, 'h6', /^######\s*(.*)(?=$)/)       }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'ul', /^\s*(\-[^-]+.*)(?!=\-])/m)  } # TODO Review, looks wrong.
+        .flat_map { |chunk| chunk_to_nodes(chunk, 'ul', /^\s*(\-[^-]+.*)(?!=\-\])/m) } # TODO Review, looks wrong.
         .flat_map { |chunk| chunk_to_nodes(chunk, 'p',  /(.*)/m)                     }
     end
 
@@ -184,6 +182,7 @@ SIMPLE_PARSE_TREE = {
 # puts Generator.process_node(SIMPLE_PARSE_TREE)
 
 # Test
+require 'pry'
 require 'minitest/spec'
 
 describe Generator do
@@ -323,6 +322,7 @@ describe Markdown do
     end
   end
 end
+
 
 require 'minitest/autorun'
 # Minitest.run if ARGV.include?('--test')
