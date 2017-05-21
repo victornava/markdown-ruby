@@ -508,7 +508,7 @@ these are:
 
 - [x] li
 - [x] strong
-- [ ] em
+- [x] em
 - [ ] a
 - [ ] code
 
@@ -520,5 +520,5 @@ Should be as simple as adding an inline matcher, let's try.
 
 Done with `strong`
 
-Next is `em`
+Next is `em`. Done.
 

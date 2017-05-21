@@ -20,7 +20,8 @@ Work in progress...
 
 This implementation will handle handle only one case of the following:
 
-- lists: `-`
-- italic: `__`
+- unordered lists: `-`
+- ordered lists:  `1.`
 - bold: `**`
+- emphasis: `_`
 - horizontal rule:`---`
