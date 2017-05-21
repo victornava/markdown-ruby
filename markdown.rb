@@ -185,141 +185,144 @@ SIMPLE_PARSE_TREE = {
 require 'pry'
 require 'minitest/spec'
 
-describe Generator do
-  it "generates html from a simple parse_tree" do
-    target = File.read('./example-simple.html')
-    # File.open('test-out.html', 'w').write(Generator.generate(SIMPLE_PARSE_TREE))
-    Generator.generate(SIMPLE_PARSE_TREE).must_equal(target)
-  end
+class MardownTest < Minitest::Spec
+  describe Generator do
+    it "generates html from a simple parse_tree" do
+      target = File.read('./example-simple.html')
+      # File.open('test-out.html', 'w').write(Generator.generate(SIMPLE_PARSE_TREE))
+      Generator.generate(SIMPLE_PARSE_TREE).must_equal(target)
+    end
 
-  it 'simple tag test' do
-    [ # Input                                         # Target
-      [{ tag: 'h1'        , content: 'Heading 1'   }, "<h1>Heading 1</h1>\n"             ],
-      [{ tag: 'h2'        , content: 'Heading 2'   }, "<h2>Heading 2</h2>\n"             ],
-      [{ tag: 'h3'        , content: 'Heading 3'   }, "<h3>Heading 3</h3>\n"             ],
-      [{ tag: 'h4'        , content: 'Heading 4'   }, "<h4>Heading 4</h4>\n"             ],
-      [{ tag: 'h5'        , content: 'Heading 5'   }, "<h5>Heading 5</h5>\n"             ],
-      [{ tag: 'h6'        , content: 'Heading 6'   }, "<h6>Heading 6</h6>\n"             ],
-      [{ tag: 'p'         , content: 'Paragraph'   }, "<p>Paragraph</p>\n"               ],
-      [{ tag: 'blockquote', content: 'BBQ'         }, "<blockquote>\nBBQ</blockquote>\n" ],
-      [{ tag: 'ul'        , content: 'Unordered'   }, "<ul>\nUnordered</ul>\n"           ],
-      [{ tag: 'ol'        , content: 'Ordered'     }, "<ol>\nOrdered</ol>\n"             ],
-      [{ tag: 'li'        , content: 'List item'   }, "<li>List item</li>\n"             ],
-      [{ tag: "code"      , content: "Code"        },  "<code>Code</code>"               ],
-      [{ tag: "em"        , content: "Italic"      }, "<em>Italic</em>"                  ],
-      [{ tag: "strong"    , content: "Strong"      }, "<strong>Strong</strong>"          ],
-      [{ tag: "br"                                 }, "<br>\n"                           ],
-      [{ tag: "hr"                                 }, "<hr>\n"                           ]
-    ].each do |input, target|
+    it 'simple tag test' do
+      [ # Input                                         # Target
+        [{ tag: 'h1'        , content: 'Heading 1'   }, "<h1>Heading 1</h1>\n"             ],
+        [{ tag: 'h2'        , content: 'Heading 2'   }, "<h2>Heading 2</h2>\n"             ],
+        [{ tag: 'h3'        , content: 'Heading 3'   }, "<h3>Heading 3</h3>\n"             ],
+        [{ tag: 'h4'        , content: 'Heading 4'   }, "<h4>Heading 4</h4>\n"             ],
+        [{ tag: 'h5'        , content: 'Heading 5'   }, "<h5>Heading 5</h5>\n"             ],
+        [{ tag: 'h6'        , content: 'Heading 6'   }, "<h6>Heading 6</h6>\n"             ],
+        [{ tag: 'p'         , content: 'Paragraph'   }, "<p>Paragraph</p>\n"               ],
+        [{ tag: 'blockquote', content: 'BBQ'         }, "<blockquote>\nBBQ</blockquote>\n" ],
+        [{ tag: 'ul'        , content: 'Unordered'   }, "<ul>\nUnordered</ul>\n"           ],
+        [{ tag: 'ol'        , content: 'Ordered'     }, "<ol>\nOrdered</ol>\n"             ],
+        [{ tag: 'li'        , content: 'List item'   }, "<li>List item</li>\n"             ],
+        [{ tag: "code"      , content: "Code"        },  "<code>Code</code>"               ],
+        [{ tag: "em"        , content: "Italic"      }, "<em>Italic</em>"                  ],
+        [{ tag: "strong"    , content: "Strong"      }, "<strong>Strong</strong>"          ],
+        [{ tag: "br"                                 }, "<br>\n"                           ],
+        [{ tag: "hr"                                 }, "<hr>\n"                           ]
+      ].each do |input, target|
+        Generator.generate(input).must_equal(target)
+      end
+    end
+
+    it 'generate simple unordered lists' do
+      input = {
+        tag: "ul", content: [
+          { tag: "li", content: "apples"  },
+          { tag: "li", content: "oranges" },
+          { tag: "li", content: "pears"   }
+        ]
+      }
+
+      target = <<-HTML.strip_heredoc
+        <ul>
+        <li>apples</li>
+        <li>oranges</li>
+        <li>pears</li>
+        </ul>
+      HTML
+
+      Generator.generate(input).must_equal(target)
+    end
+
+    it 'generate ordered lists' do
+      input = {
+        tag: "ol", content: [
+          { tag: "li", content: "uno"  },
+          { tag: "li", content: "dos"  },
+          { tag: "li", content: "tres" }
+        ]
+      }
+
+      target = <<-HTML.strip_heredoc
+        <ol>
+        <li>uno</li>
+        <li>dos</li>
+        <li>tres</li>
+        </ol>
+      HTML
+
+      Generator.generate(input).must_equal(target)
+    end
+
+    it 'generates links' do
+      Generator.generate({ tag: "a", content: "link", props: { href: "http://example.com" } })
+               .must_equal('<a href="http://example.com">link</a>')
+    end
+
+    it 'generates images' do
+      input = {
+        tag: 'img',
+        props: { src: 'http://daringfireball.net/graphics/logos/', alt: 'Gruber', title: '' }
+      }
+      target = '<img src="http://daringfireball.net/graphics/logos/" alt="Gruber" title="">'
       Generator.generate(input).must_equal(target)
     end
   end
 
-  it 'generate simple unordered lists' do
-    input = {
-      tag: "ul", content: [
-        { tag: "li", content: "apples"  },
-        { tag: "li", content: "oranges" },
-        { tag: "li", content: "pears"   }
-      ]
-    }
+  describe Parser do
+    it 'parses single lines' do
+      [ # Input               # Target
+        ['# Heading 1'     , [{ tag: 'h1'    , content: ['Heading 1'] }]],
+        ['## Heading 2'    , [{ tag: 'h2'    , content: ['Heading 2'] }]],
+        ['### Heading 3'   , [{ tag: 'h3'    , content: ['Heading 3'] }]],
+        ['#### Heading 4'  , [{ tag: 'h4'    , content: ['Heading 4'] }]],
+        ['##### Heading 5' , [{ tag: 'h5'    , content: ['Heading 5'] }]],
+        ['###### Heading 6', [{ tag: 'h6'    , content: ['Heading 6'] }]],
+        ['Paragraph'       , [{ tag: 'p'     , content: ['Paragraph'] }]],
+      ].each do |input, target|
+        assert_equal target, Parser.parse(input)[:content], "#{input} should produce #{target}"
+      end
+    end
 
-    target = <<-HTML.strip_heredoc
-      <ul>
-      <li>apples</li>
-      <li>oranges</li>
-      <li>pears</li>
-      </ul>
-    HTML
+    it 'parses simple unordered lists' do
+      input = <<-MARKDOWN.strip_heredoc
+        - apples
+        - oranges
+        - pears
+      MARKDOWN
 
-    Generator.generate(input).must_equal(target)
-  end
+      target = [{
+        tag: "ul", content: [
+          { tag: "li", content: "apples"  },
+          { tag: "li", content: "oranges" },
+          { tag: "li", content: "pears"   }
+        ]
+      }]
 
-  it 'generate ordered lists' do
-    input = {
-      tag: "ol", content: [
-        { tag: "li", content: "uno"  },
-        { tag: "li", content: "dos"  },
-        { tag: "li", content: "tres" }
-      ]
-    }
-
-    target = <<-HTML.strip_heredoc
-      <ol>
-      <li>uno</li>
-      <li>dos</li>
-      <li>tres</li>
-      </ol>
-    HTML
-
-    Generator.generate(input).must_equal(target)
-  end
-
-  it 'generates links' do
-    Generator.generate({ tag: "a", content: "link", props: { href: "http://example.com" } })
-             .must_equal('<a href="http://example.com">link</a>')
-  end
-
-  it 'generates images' do
-    input = {
-      tag: 'img',
-      props: { src: 'http://daringfireball.net/graphics/logos/', alt: 'Gruber', title: '' }
-    }
-    target = '<img src="http://daringfireball.net/graphics/logos/" alt="Gruber" title="">'
-    Generator.generate(input).must_equal(target)
-  end
-end
-
-describe Parser do
-  it 'parses single lines' do
-    [ # Input               # Target
-      ['# Heading 1'     , [{ tag: 'h1'    , content: ['Heading 1'] }]],
-      ['## Heading 2'    , [{ tag: 'h2'    , content: ['Heading 2'] }]],
-      ['### Heading 3'   , [{ tag: 'h3'    , content: ['Heading 3'] }]],
-      ['#### Heading 4'  , [{ tag: 'h4'    , content: ['Heading 4'] }]],
-      ['##### Heading 5' , [{ tag: 'h5'    , content: ['Heading 5'] }]],
-      ['###### Heading 6', [{ tag: 'h6'    , content: ['Heading 6'] }]],
-      ['Paragraph'       , [{ tag: 'p'     , content: ['Paragraph'] }]],
-    ].each do |input, target|
-      assert_equal target, Parser.parse(input)[:content], "#{input} should produce #{target}"
+      Parser.parse(input)[:content].must_equal(target)
     end
   end
 
-  it 'parses simple unordered lists' do
-    input = <<-MARKDOWN.strip_heredoc
-      - apples
-      - oranges
-      - pears
-    MARKDOWN
-
-    target = [{
-      tag: "ul", content: [
-        { tag: "li", content: "apples"  },
-        { tag: "li", content: "oranges" },
-        { tag: "li", content: "pears"   }
-      ]
-    }]
-
-    Parser.parse(input)[:content].must_equal(target)
+  describe Markdown do
+    describe 'simple markdown' do
+      it 'handles paragraphs and h1' do
+        input  = File.read('example.md')
+        target = File.read('example.html')
+        output = Markdown.to_html(input)
+        File.write 'out.html', output
+        assert_equal target, output
+      end
+    end
   end
 end
-# Test Helpers
+
+# Helpers
 class String
   # http://api.rubyonrails.org/classes/String.html#method-i-strip_heredoc
   def strip_heredoc
     gsub(/^#{scan(/^[ \t]*(?=\S)/).min}/, "".freeze)
-  end
-end
-
-describe Markdown do
-  describe 'simple markdown' do
-    it 'handles paragraphs and h1' do
-      input  = File.read('example.md')
-      target = File.read('example.html')
-      output = Markdown.to_html(input)
-      File.write 'out.html', output
-      assert_equal target, output
-    end
   end
 end
 
