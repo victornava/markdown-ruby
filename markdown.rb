@@ -15,6 +15,23 @@ class Parser
       }
     end
 
+    BLOCK_MATCHERS = [
+      { tag: 'h1', regexp: /^#[^#](.*)(?=$)/            },
+      { tag: 'h2', regexp: /^##[^#](.*)(?=$)/           },
+      { tag: 'h3', regexp: /^###[^#](.*)(?=$)/          },
+      { tag: 'h4', regexp: /^####[^#](.*)(?=$)/         },
+      { tag: 'h5', regexp: /^#####[^#](.*)(?=$)/        },
+      { tag: 'h6', regexp: /^######\s*(.*)(?=$)/        },
+      { tag: 'ul', regexp: /^\s*(\-[^-]+.*)(?!=\-\])/m  }, # TODO Review, looks wrong.
+      { tag: 'ol', regexp: /^\s*(\d+\..*)(?!=\d+\.\])/m }, # TODO Review, looks wrong.
+      { tag: 'p',  regexp: /(.*)/m                      },
+    ]
+
+    INLINE_MATCHERS = [
+      { tag: 'li', regexp: /^\s*\-\s+(.*)\n?$/          },
+      { tag: 'li', regexp: /^\s*\d+\.\s?(.*)\n?$/       },
+    ]
+
     def split_into_chunks(markdown)
       markdown
         .split(/^\s*$/)                      # split by empty lines
@@ -22,22 +39,19 @@ class Parser
     end
 
     def split_into_blocks(chunks)
-      chunks
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'h1', /^#[^#](.*)(?=$)/)                 }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'h2', /^##[^#](.*)(?=$)/)                }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'h3', /^###[^#](.*)(?=$)/)               }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'h4', /^####[^#](.*)(?=$)/)              }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'h5', /^#####[^#](.*)(?=$)/)             }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'h6', /^######\s*(.*)(?=$)/)             }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'ul', /^\s*(\-[^-]+.*)(?!=\-\])/m)       } # TODO Review, looks wrong.
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'ol', /^\s*(\d+\..*)(?!=\d+\.\])/m)      } # TODO Review, looks wrong.
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'p',  /(.*)/m)                           }
+      chunks_to_nodes(chunks, BLOCK_MATCHERS)
     end
 
     def split_into_inlines(chunk)
-      [chunk]
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'li', /^\s*\-\s+(.*)\n?$/)    }
-        .flat_map { |chunk| chunk_to_nodes(chunk, 'li', /^\s*\d+\.\s?(.*)\n?$/) }
+      chunks_to_nodes([chunk], INLINE_MATCHERS)
+    end
+
+    def chunks_to_nodes(chunks, matchers)
+      matchers.reduce(chunks) do |chunks, matcher|
+        chunks.flat_map do |chunk|
+          chunk_to_nodes(chunk, matcher[:tag], matcher[:regexp])
+        end
+      end
     end
 
     def chunk_to_nodes(chunk, tag, regexp)
