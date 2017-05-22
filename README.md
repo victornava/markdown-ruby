@@ -7,21 +7,23 @@ Work in progress...
 # TODO
 
 - [x] Paragraphs
-- [x] Headings
+- [x] Line Breaks
+- [x] Headers
+- [ ] Blockquotes
 - [x] Lists
-- [ ] Inline
-- [ ] Line Breaks
-- [ ] Rules
+- [ ] Code Blocks
+- [ ] Horizontal Rules
 - [ ] Code
-- [ ] Blockquote
+- [x] Emphasis
+- [ ] Links
 - [ ] Embedded HTML?
 
 ## Scope
 
-This implementation will handle handle only one case of the following:
+In cases where might be more than one way of doing things, we handle a single case of:
 
-- unordered lists: `-`
-- ordered lists:  `1.`
-- bold: `**`
-- emphasis: `_`
+- Headers with hashes # H1, ## H2...###### H6
+- Unordered lists with dash: `-`
+- Strong with double stars `**bold**`
+- Emphasis with single underscores: `_italic_`
 - horizontal rule:`---`

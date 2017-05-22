@@ -354,7 +354,7 @@ Because the line begins with a hash.
 
 Are there other types of headings?
 
-Yes. There is h2, h3, h4, h5 and h6. Bud let's not get ahead.
+Yes. There is h2, h3, h4, h5 and h6. But let's not get ahead.
 
 H1's are pieces of text that:
     
@@ -374,7 +374,7 @@ should produce:
 
     [{ tag: 'h1' , content: 'Heading 1' }]
 
-that that worded, except that we should markdown strips spaces before words. But should we do this at the parse level, or should be process the content in the generator?
+that worked, except that we should markdown strips spaces before words. But should we do this at the parse level, or should be process the content in the generator?
 
 It's seems easy to do it here, so let's go ahead.
 
@@ -388,7 +388,7 @@ Our current process goes like this
     split it into chunks
     identify each chunk as either a paragraph of h1
 
-the problem with this is that, a chunk can have multiple lines, so it can have paragraphs and headings, so we need to create have a process for splitting chunks into blocks.
+the problem with this is that, a chunk can have multiple lines, so it can have paragraphs and headings, so we need to have a process for splitting chunks into blocks.
 
 Processing the chunk line by line works well with headings but not with paragraphs.
 
@@ -454,7 +454,7 @@ beginning of match, content , end of match
 in this case we could transform the regexp to
 
     /
-    ^\s*\-(?!=\-) start:   starts with beinging then maybe spaces, followed by a dash, not followed by a dash
+    ^\s*\-(?!=\-) start:   starts at beginning of line then maybe spaces, followed by a dash, not followed by a dash
     (.*)          content: anything
     ^\s*\-(?!=\-) end:     same as start
     /

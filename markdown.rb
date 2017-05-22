@@ -303,6 +303,7 @@ class MardownTest < Minitest::Spec
         ['Paragraph'       , [{ tag: 'p' , content: ['Paragraph'] }]],
         ['**Strong**'      , [{ tag: 'p' , content: [{ tag: "strong", content: ["Strong"]   }] }]],
         ['_Emphasis_'      , [{ tag: 'p' , content: [{ tag: "em",     content: ["Emphasis"] }] }]],
+        ['`Monospace`'      , [{ tag: 'p' , content: [{ tag: "em",     content: ["Emphasis"] }] }]],
       ].each do |input, target|
         assert_equal target, Parser.parse(input)[:content], "#{input} should produce #{target}"
       end
@@ -352,7 +353,7 @@ class MardownTest < Minitest::Spec
         input  = File.read('example.md')
         target = File.read('example.html')
         output = Markdown.to_html(input)
-        # File.write('out.html', output)
+        File.write('out.html', output)
         assert_equal target, output
       end
     end
