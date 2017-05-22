@@ -502,15 +502,13 @@ None yet. Tried that and it only seems to complicate things. Let's keep going we
 
 Done with ordered lists.
 
-# Next is inline elements
-
-these are:
+Next is inline elements. these are:
 
 - [x] li
 - [x] strong
 - [x] em
-- [ ] a
-- [ ] code
+- [x] code
+- [ ] links
 
 `li` is done
 
@@ -521,4 +519,9 @@ Should be as simple as adding an inline matcher, let's try.
 Done with `strong`
 
 Next is `em`. Done.
+
+# 2017-05-22
+
+Done with code. That was super simple to add.
+Next links
 

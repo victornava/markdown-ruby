@@ -32,6 +32,7 @@ class Parser
       { tag: 'li'    , regexp: /^\s*\d+\.\s?(.*)\n?$/ },
       { tag: 'strong', regexp: /\*\*(.*)\*\*/         },
       { tag: 'em'    , regexp: /_(.*)_/               },
+      { tag: 'code'  , regexp: /`(.*)`/               },
     ]
 
     def split_into_chunks(markdown)
@@ -303,7 +304,7 @@ class MardownTest < Minitest::Spec
         ['Paragraph'       , [{ tag: 'p' , content: ['Paragraph'] }]],
         ['**Strong**'      , [{ tag: 'p' , content: [{ tag: "strong", content: ["Strong"]   }] }]],
         ['_Emphasis_'      , [{ tag: 'p' , content: [{ tag: "em",     content: ["Emphasis"] }] }]],
-        ['`Monospace`'      , [{ tag: 'p' , content: [{ tag: "em",     content: ["Emphasis"] }] }]],
+        ['`Monospace`'     , [{ tag: 'p' , content: [{ tag: "code",   content: ["Monospace"] }] }]],
       ].each do |input, target|
         assert_equal target, Parser.parse(input)[:content], "#{input} should produce #{target}"
       end

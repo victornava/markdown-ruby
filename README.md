@@ -13,7 +13,7 @@ Work in progress...
 - [x] Lists
 - [ ] Code Blocks
 - [ ] Horizontal Rules
-- [ ] Code
+- [x] Code
 - [x] Emphasis
 - [ ] Links
 - [ ] Embedded HTML?
