@@ -16,7 +16,7 @@ Work in progress...
 - [x] Code
 - [x] Emphasis
 - [x] Links
-- [ ] Images
+- [x] Images
 - [ ] Embedded HTML?
 
 ## Scope

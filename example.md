@@ -29,3 +29,5 @@ Numbered list:
   3. pears
 
 A [link](http://example.com).
+
+An image ![Gruber](http://daringfireball.net/graphics/logos/)

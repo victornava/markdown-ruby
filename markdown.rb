@@ -29,12 +29,13 @@ class Parser
     ]
 
     INLINE_MATCHERS = [
-      { tag: 'li'    , regexp: /^\s*\-\s+(.*)\n?$/    },
-      { tag: 'li'    , regexp: /^\s*\d+\.\s?(.*)\n?$/ },
-      { tag: 'strong', regexp: /\*\*(.*)\*\*/         },
-      { tag: 'em'    , regexp: /_(.*)_/               },
-      { tag: 'code'  , regexp: /`(.*)`/               },
-      { tag: 'a'     , regexp: /\[(.*)\]\((.*)\)/     },
+      { tag: 'li'    , regexp: /^\s*\-\s+(.*)\n?$/       },
+      { tag: 'li'    , regexp: /^\s*\d+\.\s?(.*)\n?$/    },
+      { tag: 'strong', regexp: /\*\*(.*)\*\*/            },
+      { tag: 'em'    , regexp: /_(.*)_/                  },
+      { tag: 'code'  , regexp: /`(.*)`/                  },
+      { tag: 'a'     , regexp: /(?<!\!)\[(.*)\]\((.*)\)/ },
+      { tag: 'img'   , regexp: /\!\[(.*)\]\((.*)\)/      },
     ]
 
     def split_into_chunks(markdown)
@@ -65,19 +66,20 @@ class Parser
         []
       else
         before, match, rest =  chunk.partition(regexp)
-        # puts "Match (#{chunk.inspect}) as (#{tag}) with (#{regexp})"
-        # puts [chunk, tag, regexp, before, match, rest].inspect
+        # print "Match (#{chunk.inspect}) as (#{tag}) with (#{regexp}) "
         if match.empty?
           # puts "❌"
           [chunk]
         else
-          # puts "✅ as #{tag}"
+          # puts "✅"
           # puts "Trying to find inlines..."
-          node = { tag: tag, content: split_into_inlines(chunk[regexp, 1]) }
-          if tag == 'a'
-            # binding.pry
-            # TODO shouldn't need special cases here
-            node.merge!(props: { href: chunk[regexp, 2] })
+          node = case tag
+          when 'a'
+            { tag: tag, content: split_into_inlines(chunk[regexp, 1]), props: { href: chunk[regexp, 2] }}
+          when 'img'
+            { tag: tag, props: { src: chunk[regexp, 2], alt: chunk[regexp, 1], title: "" }}
+          else
+            { tag: tag, content: split_into_inlines(chunk[regexp, 1]) }
           end
 
           # puts "Done with inlines node is: #{node.inspect}"
@@ -214,7 +216,7 @@ SIMPLE_PARSE_TREE = {
   ]
 }
 
-# puts Generator.process_node(SIMPLE_PARSE_TREE)q
+# puts Generator.process_node(SIMPLE_PARSE_TREE)
 
 # Test
 require 'pry'
@@ -308,19 +310,21 @@ class MardownTest < Minitest::Spec
 
   describe Parser do
     it 'parses single lines' do
-      [ # Input              # Target
-        ['# Heading 1'         , [{ tag: 'h1', content: ['Heading 1'] }]],
-        ['## Heading 2'        , [{ tag: 'h2', content: ['Heading 2'] }]],
-        ['### Heading 3'       , [{ tag: 'h3', content: ['Heading 3'] }]],
-        ['#### Heading 4'      , [{ tag: 'h4', content: ['Heading 4'] }]],
-        ['##### Heading 5'     , [{ tag: 'h5', content: ['Heading 5'] }]],
-        ['###### Heading 6'    , [{ tag: 'h6', content: ['Heading 6'] }]],
-        ['Paragraph'           , [{ tag: 'p' , content: ['Paragraph'] }]],
-        ['---'                 , [{ tag: 'hr', content: [] }]],
-        ['**Strong**'          , [{ tag: 'p' , content: [{ tag: "strong", content: ["Strong"]   }] }]],
-        ['_Emphasis_'          , [{ tag: 'p' , content: [{ tag: "em",     content: ["Emphasis"] }] }]],
-        ['`Monospace`'         , [{ tag: 'p' , content: [{ tag: "code",   content: ["Monospace"] }] }]],
-        ['[link](http://example.com)' , [{ tag: 'p',  content: [{ tag: 'a', content: ['link'], props: { href: 'http://example.com' }}]}]],
+      [ # Input                        # Target
+        ['# Heading 1'               , [{ tag: 'h1', content: ['Heading 1'] }]],
+        ['## Heading 2'              , [{ tag: 'h2', content: ['Heading 2'] }]],
+        ['### Heading 3'             , [{ tag: 'h3', content: ['Heading 3'] }]],
+        ['#### Heading 4'            , [{ tag: 'h4', content: ['Heading 4'] }]],
+        ['##### Heading 5'           , [{ tag: 'h5', content: ['Heading 5'] }]],
+        ['###### Heading 6'          , [{ tag: 'h6', content: ['Heading 6'] }]],
+        ['Paragraph'                 , [{ tag: 'p' , content: ['Paragraph'] }]],
+        ['---'                       , [{ tag: 'hr', content: [] }]],
+        ['**Strong**'                , [{ tag: 'p' , content: [{ tag: "strong", content: ["Strong"]    }]}]],
+        ['_Emphasis_'                , [{ tag: 'p' , content: [{ tag: "em",     content: ["Emphasis"]  }]}]],
+        ['`Monospace`'               , [{ tag: 'p' , content: [{ tag: "code",   content: ["Monospace"] }]}]],
+        ['[link](http://example.com)', [{ tag: 'p' , content: [{ tag: 'a', content: ['link'], props: { href: 'http://example.com' }}]}]],
+        ['![Img](http://x.io/x.jpg)' , [{ tag: 'p' , content: [{ tag: 'img', props: { src: 'http://x.io/x.jpg', alt: 'Img', title: '' }}]}]],
+
       ].each do |input, target|
         assert_equal target, Parser.parse(input)[:content], "#{input} should produce #{target}"
       end
@@ -343,7 +347,6 @@ class MardownTest < Minitest::Spec
 
       Parser.parse(input)[:content].must_equal(target)
     end
-
 
     it 'parses simple ordered lists' do
       input = <<-MARKDOWN.strip_heredoc

@@ -533,4 +533,6 @@ Next: let's try something simple like Horizontal Rules
 
 Done, that was easy.
 
-Next is Images. Let's be done with inline elements.
+Next is images. Let's be done with inline elements.
+
+Done with images. Sleepy sleepy time 😴
