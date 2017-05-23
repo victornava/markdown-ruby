@@ -33,6 +33,7 @@ class Parser
       { tag: 'strong', regexp: /\*\*(.*)\*\*/         },
       { tag: 'em'    , regexp: /_(.*)_/               },
       { tag: 'code'  , regexp: /`(.*)`/               },
+      { tag: 'a'     , regexp: /\[(.*)\]\((.*)\)/     },
     ]
 
     def split_into_chunks(markdown)
@@ -63,10 +64,22 @@ class Parser
         []
       else
         before, match, rest =  chunk.partition(regexp)
+        # puts "Match (#{chunk.inspect}) as (#{tag}) with (#{regexp})"
+        # puts [chunk, tag, regexp, before, match, rest].inspect
         if match.empty?
+          # puts "❌"
           [chunk]
         else
+          # puts "✅ as #{tag}"
+          # puts "Trying to find inlines..."
           node = { tag: tag, content: split_into_inlines(chunk[regexp, 1]) }
+          if tag == 'a'
+            # binding.pry
+            # TODO shouldn't need special cases here
+            node.merge!(props: { href: chunk[regexp, 2] })
+          end
+
+          # puts "Done with inlines node is: #{node.inspect}"
           if before.chomp.empty?
             [node].concat(chunk_to_nodes(rest, tag, regexp))
           else
@@ -295,16 +308,17 @@ class MardownTest < Minitest::Spec
   describe Parser do
     it 'parses single lines' do
       [ # Input              # Target
-        ['# Heading 1'     , [{ tag: 'h1', content: ['Heading 1'] }]],
-        ['## Heading 2'    , [{ tag: 'h2', content: ['Heading 2'] }]],
-        ['### Heading 3'   , [{ tag: 'h3', content: ['Heading 3'] }]],
-        ['#### Heading 4'  , [{ tag: 'h4', content: ['Heading 4'] }]],
-        ['##### Heading 5' , [{ tag: 'h5', content: ['Heading 5'] }]],
-        ['###### Heading 6', [{ tag: 'h6', content: ['Heading 6'] }]],
-        ['Paragraph'       , [{ tag: 'p' , content: ['Paragraph'] }]],
-        ['**Strong**'      , [{ tag: 'p' , content: [{ tag: "strong", content: ["Strong"]   }] }]],
-        ['_Emphasis_'      , [{ tag: 'p' , content: [{ tag: "em",     content: ["Emphasis"] }] }]],
-        ['`Monospace`'     , [{ tag: 'p' , content: [{ tag: "code",   content: ["Monospace"] }] }]],
+        ['# Heading 1'         , [{ tag: 'h1', content: ['Heading 1'] }]],
+        ['## Heading 2'        , [{ tag: 'h2', content: ['Heading 2'] }]],
+        ['### Heading 3'       , [{ tag: 'h3', content: ['Heading 3'] }]],
+        ['#### Heading 4'      , [{ tag: 'h4', content: ['Heading 4'] }]],
+        ['##### Heading 5'     , [{ tag: 'h5', content: ['Heading 5'] }]],
+        ['###### Heading 6'    , [{ tag: 'h6', content: ['Heading 6'] }]],
+        ['Paragraph'           , [{ tag: 'p' , content: ['Paragraph'] }]],
+        ['**Strong**'          , [{ tag: 'p' , content: [{ tag: "strong", content: ["Strong"]   }] }]],
+        ['_Emphasis_'          , [{ tag: 'p' , content: [{ tag: "em",     content: ["Emphasis"] }] }]],
+        ['`Monospace`'         , [{ tag: 'p' , content: [{ tag: "code",   content: ["Monospace"] }] }]],
+        ['[link](http://example.com)' , [{ tag: 'p',  content: [{ tag: 'a', content: ['link'], props: { href: 'http://example.com' }}]}]],
       ].each do |input, target|
         assert_equal target, Parser.parse(input)[:content], "#{input} should produce #{target}"
       end

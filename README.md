@@ -15,7 +15,8 @@ Work in progress...
 - [ ] Horizontal Rules
 - [x] Code
 - [x] Emphasis
-- [ ] Links
+- [x] Links
+- [ ] Images
 - [ ] Embedded HTML?
 
 ## Scope

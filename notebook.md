@@ -525,3 +525,8 @@ Next is `em`. Done.
 Done with code. That was super simple to add.
 Next links
 
+# 2017-05-23
+
+Links are done.
+
+Next: let's try something simple like Horizontal Rules
