@@ -24,6 +24,7 @@ class Parser
       { tag: 'h6', regexp: /^######\s*(.*)(?=$)/        },
       { tag: 'ul', regexp: /^\s*(\-[^-]+.*)(?!=\-\])/m  }, # TODO Review, looks wrong.
       { tag: 'ol', regexp: /^\s*(\d+\..*)(?!=\d+\.\])/m }, # TODO Review, looks wrong.
+      { tag: 'hr', regexp: /^\-\-\-+$/                  },
       { tag: 'p',  regexp: /(.*)/m                      },
     ]
 
@@ -47,7 +48,7 @@ class Parser
     end
 
     def split_into_inlines(chunk)
-      chunks_to_nodes([chunk], INLINE_MATCHERS)
+      chunks_to_nodes([chunk], INLINE_MATCHERS).compact
     end
 
     def chunks_to_nodes(chunks, matchers)
@@ -315,6 +316,7 @@ class MardownTest < Minitest::Spec
         ['##### Heading 5'     , [{ tag: 'h5', content: ['Heading 5'] }]],
         ['###### Heading 6'    , [{ tag: 'h6', content: ['Heading 6'] }]],
         ['Paragraph'           , [{ tag: 'p' , content: ['Paragraph'] }]],
+        ['---'                 , [{ tag: 'hr', content: [] }]],
         ['**Strong**'          , [{ tag: 'p' , content: [{ tag: "strong", content: ["Strong"]   }] }]],
         ['_Emphasis_'          , [{ tag: 'p' , content: [{ tag: "em",     content: ["Emphasis"] }] }]],
         ['`Monospace`'         , [{ tag: 'p' , content: [{ tag: "code",   content: ["Monospace"] }] }]],

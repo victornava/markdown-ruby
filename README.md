@@ -12,7 +12,7 @@ Work in progress...
 - [ ] Blockquotes
 - [x] Lists
 - [ ] Code Blocks
-- [ ] Horizontal Rules
+- [x] Horizontal Rules
 - [x] Code
 - [x] Emphasis
 - [x] Links
@@ -27,4 +27,4 @@ In cases where might be more than one way of doing things, we handle a single ca
 - Unordered lists with dash: `-`
 - Strong with double stars `**bold**`
 - Emphasis with single underscores: `_italic_`
-- horizontal rule:`---`
+- Horizontal rule with `---`

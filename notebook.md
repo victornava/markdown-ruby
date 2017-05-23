@@ -508,7 +508,7 @@ Next is inline elements. these are:
 - [x] strong
 - [x] em
 - [x] code
-- [ ] links
+- [x] links
 
 `li` is done
 
@@ -530,3 +530,7 @@ Next links
 Links are done.
 
 Next: let's try something simple like Horizontal Rules
+
+Done, that was easy.
+
+Next is Images. Let's be done with inline elements.
