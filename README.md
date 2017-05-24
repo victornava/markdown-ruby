@@ -11,12 +11,13 @@ Work in progress...
 - [x] Headers
 - [ ] Blockquotes
 - [x] Lists
-- [ ] Code Blocks
+- [x] Code Blocks
 - [x] Horizontal Rules
 - [x] Code
 - [x] Emphasis
 - [x] Links
 - [x] Images
+- [ ] test against https://daringfireball.net/projects/markdown/syntax ?
 - [ ] Embedded HTML?
 
 ## Scope

@@ -536,3 +536,13 @@ Done, that was easy.
 Next is images. Let's be done with inline elements.
 
 Done with images. Sleepy sleepy time 😴
+
+# 2017-05-24
+
+Let's do Code Blocks, what are this things?
+
+code blocks are consecutive lines that start with 4 or more spaces
+
+    \n\n\n\narray.reverse -> <pre><code>array.reverse</code></pre>
+
+Done. Things are getting a bit hacky. Might need to refactor a bit on the next session.

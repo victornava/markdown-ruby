@@ -15,25 +15,27 @@ class Parser
       }
     end
 
+    # Order important here. Chunks get converted to paragraphs if they don't match anything else
     BLOCK_MATCHERS = [
-      { tag: 'h1', regexp: /^#[^#](.*)(?=$)/            },
-      { tag: 'h2', regexp: /^##[^#](.*)(?=$)/           },
-      { tag: 'h3', regexp: /^###[^#](.*)(?=$)/          },
-      { tag: 'h4', regexp: /^####[^#](.*)(?=$)/         },
-      { tag: 'h5', regexp: /^#####[^#](.*)(?=$)/        },
-      { tag: 'h6', regexp: /^######\s*(.*)(?=$)/        },
-      { tag: 'ul', regexp: /^\s*(\-[^-]+.*)(?!=\-\])/m  }, # TODO Review, looks wrong.
-      { tag: 'ol', regexp: /^\s*(\d+\..*)(?!=\d+\.\])/m }, # TODO Review, looks wrong.
-      { tag: 'hr', regexp: /^\-\-\-+$/                  },
-      { tag: 'p',  regexp: /(.*)/m                      },
+      { tag: 'h1'        , regexp: /^#[^#](.*)(?=$)/            },
+      { tag: 'h2'        , regexp: /^##[^#](.*)(?=$)/           },
+      { tag: 'h3'        , regexp: /^###[^#](.*)(?=$)/          },
+      { tag: 'h4'        , regexp: /^####[^#](.*)(?=$)/         },
+      { tag: 'h5'        , regexp: /^#####[^#](.*)(?=$)/        },
+      { tag: 'h6'        , regexp: /^######\s*(.*)(?=$)/        },
+      { tag: 'ul'        , regexp: /^\s*(\-[^-]+.*)(?!=\-\])/m  }, # 🤔 looks wrong
+      { tag: 'ol'        , regexp: /^\s*(\d+\..*)(?!=\d+\.\])/m }, # 🤔 looks wrong
+      { tag: 'hr'        , regexp: /^\-\-\-+$/                  },
+      { tag: 'code_block', regexp: /(^\ {4,}.*)+/m              }, # 🤔 produces pre and code tags
+      { tag: 'p'         , regexp: /(.*)/m                      }, # 🤔 too open?
     ]
 
     INLINE_MATCHERS = [
+      { tag: 'code'  , regexp: /`+(.*)`+/                },
       { tag: 'li'    , regexp: /^\s*\-\s+(.*)\n?$/       },
       { tag: 'li'    , regexp: /^\s*\d+\.\s?(.*)\n?$/    },
       { tag: 'strong', regexp: /\*\*(.*)\*\*/            },
       { tag: 'em'    , regexp: /_(.*)_/                  },
-      { tag: 'code'  , regexp: /`(.*)`/                  },
       { tag: 'a'     , regexp: /(?<!\!)\[(.*)\]\((.*)\)/ },
       { tag: 'img'   , regexp: /\!\[(.*)\]\((.*)\)/      },
     ]
@@ -66,23 +68,28 @@ class Parser
         []
       else
         before, match, rest =  chunk.partition(regexp)
-        # print "Match (#{chunk.inspect}) as (#{tag}) with (#{regexp}) "
+        log "Match (#{chunk.inspect}) as (#{tag}) with (#{regexp}) "
         if match.empty?
-          # puts "❌"
+          log "❌"
           [chunk]
         else
-          # puts "✅"
-          # puts "Trying to find inlines..."
+          log "✅"
+          log "Trying to find inlines..."
           node = case tag
           when 'a'
             { tag: tag, content: split_into_inlines(chunk[regexp, 1]), props: { href: chunk[regexp, 2] }}
           when 'img'
             { tag: tag, props: { src: chunk[regexp, 2], alt: chunk[regexp, 1], title: "" }}
+          when 'code_block'
+            # binding.pry
+            # 🤔 produces pre and code tags
+            content = chunk[regexp].gsub(/^ {4}/,'') # 🤔 hack
+            { tag: 'pre', content: [{ tag: 'code', content: [content]}]}
           else
             { tag: tag, content: split_into_inlines(chunk[regexp, 1]) }
           end
 
-          # puts "Done with inlines node is: #{node.inspect}"
+          log "Done with inlines node is: #{node.inspect}"
           if before.chomp.empty?
             [node].concat(chunk_to_nodes(rest, tag, regexp))
           else
@@ -96,7 +103,7 @@ end
 
 class Generator
   BLOCK_TAGS  = %w[h1 h2 h3 h4 h5 h6 p blockquote ul ol]
-  INLINE_TAGS = %w[li a strong em code]
+  INLINE_TAGS = %w[li a strong em code pre]
   SINGLE_TAGS = %w[br hr img]
   NORMAL_TAGS = BLOCK_TAGS + INLINE_TAGS
 
@@ -216,7 +223,7 @@ SIMPLE_PARSE_TREE = {
   ]
 }
 
-# puts Generator.process_node(SIMPLE_PARSE_TREE)
+# log Generator.process_node(SIMPLE_PARSE_TREE)
 
 # Test
 require 'pry'
@@ -243,11 +250,12 @@ class MardownTest < Minitest::Spec
         [{ tag: 'ul'        , content: 'Unordered'   }, "<ul>\nUnordered</ul>\n"           ],
         [{ tag: 'ol'        , content: 'Ordered'     }, "<ol>\nOrdered</ol>\n"             ],
         [{ tag: 'li'        , content: 'List item'   }, "<li>List item</li>\n"             ],
-        [{ tag: "code"      , content: "Code"        },  "<code>Code</code>"               ],
+        [{ tag: "code"      , content: "Code"        }, "<code>Code</code>"                ],
+        [{ tag: "pre"       , content: "Pre"         }, "<pre>Pre</pre>"                   ],
         [{ tag: "em"        , content: "Italic"      }, "<em>Italic</em>"                  ],
         [{ tag: "strong"    , content: "Strong"      }, "<strong>Strong</strong>"          ],
         [{ tag: "br"                                 }, "<br>\n"                           ],
-        [{ tag: "hr"                                 }, "<hr>\n"                           ]
+        [{ tag: "hr"                                 }, "<hr>\n"                           ],
       ].each do |input, target|
         Generator.generate(input).must_equal(target)
       end
@@ -365,6 +373,14 @@ class MardownTest < Minitest::Spec
 
       Parser.parse(input)[:content].must_equal(target)
     end
+
+    it 'parses code blocks' do
+      input   = "    def a_code_block\n" + "      print \"looks like this\"\n" + "    end\n"
+      content = "def a_code_block\n" + "  print \"looks like this\"\n" + "end"
+
+      target = [{ tag: 'pre', content: [{ tag: 'code', content: [content]}]}]
+      assert_equal target, Parser.parse(input)[:content]
+    end
   end
 
   describe Markdown do
@@ -388,6 +404,9 @@ class String
   end
 end
 
+def log(message)
+  # puts message
+end
 
 require 'minitest/autorun'
-# Minitest.run if ARGV.include?('--test')
+# puts Markdown.to_html(File.read('example.md'))
