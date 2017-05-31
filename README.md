@@ -9,7 +9,7 @@ Work in progress...
 - [x] Paragraphs
 - [x] Line Breaks
 - [x] Headers
-- [ ] Blockquotes
+- [x] Blockquotes
 - [x] Lists
 - [x] Code Blocks
 - [x] Horizontal Rules
@@ -17,6 +17,7 @@ Work in progress...
 - [x] Emphasis
 - [x] Links
 - [x] Images
+- [ ] Leave empty lines intact?
 - [ ] test against https://daringfireball.net/projects/markdown/syntax ?
 - [ ] Embedded HTML?
 
@@ -29,3 +30,7 @@ In cases where might be more than one way of doing things, we handle a single ca
 - Strong with double stars `**bold**`
 - Emphasis with single underscores: `_italic_`
 - Horizontal rule with `---`
+
+## Notebook
+
+The [Notebook](./notebook.md) is [here](./notebook.md)

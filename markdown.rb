@@ -29,6 +29,7 @@ class Parser
       { tag: 'ol'        , regexp: /^\s*(\d+\..*)(?!=\d+\.\])/m }, # 🤔 looks wrong
       { tag: 'hr'        , regexp: /^\-\-\-+$/                  },
       { tag: 'code_block', regexp: /(^\ {4,}.*)+/m              }, # 🤔 produces pre and code tags
+      { tag: 'blockquote', regexp: /^\s?\>\s?.*$/m            }, # 🤔 produces blockquote and p tags
       { tag: 'p'         , regexp: /(.*)/m                      }, # 🤔 too open?
     ]
 
@@ -83,10 +84,13 @@ class Parser
           when 'img'
             { tag: tag, props: { src: chunk[regexp, 2], alt: chunk[regexp, 1], title: "" }}
           when 'code_block'
-            # binding.pry
-            # 🤔 produces pre and code tags
-            content = chunk[regexp].gsub(/^ {4}/,'') # 🤔 hack
+            # 🤔 produces 2 block tags
+            content = chunk[regexp].gsub(/^ {4}/,'') # 🤔 hack?
             { tag: 'pre', content: [{ tag: 'code', content: [content]}]}
+          when 'blockquote'
+            # 🤔 produces 2 block tags
+            content = chunk[regexp].gsub(/^\s?\>\s?/, '') # 🤔 hack?
+            { tag: 'blockquote', content: [{ tag: 'p', content: [content]}]} # 🤔 why content needs to array?
           else
             { tag: tag, content: split_into_inlines(chunk[regexp, 1]) }
           end
@@ -347,7 +351,7 @@ class MardownTest < Minitest::Spec
         ['`Monospace`'               , [{ tag: 'p' , content: [{ tag: "code",   content: ["Monospace"] }]}]],
         ['[link](http://example.com)', [{ tag: 'p' , content: [{ tag: 'a', content: ['link'], props: { href: 'http://example.com' }}]}]],
         ['![Img](http://x.io/x.jpg)' , [{ tag: 'p' , content: [{ tag: 'img', props: { src: 'http://x.io/x.jpg', alt: 'Img', title: '' }}]}]],
-
+        ['> Blockquote'              , [{ tag: 'blockquote', content: [{ tag: 'p', content: ["Blockquote"] }] }]],
       ].each do |input, target|
         assert_equal target, Parser.parse(input)[:content], "#{input} should produce #{target}"
       end
@@ -395,6 +399,20 @@ class MardownTest < Minitest::Spec
 
       target = [{ tag: 'pre', content: [{ tag: 'code', content: [content]}]}]
       assert_equal target, Parser.parse(input)[:content]
+    end
+
+    it 'parses multiline blockquotes' do
+      input1  = "> a blockquote\ncontinues here"
+      target1 = [{ tag: 'blockquote', content: [{ tag: 'p', content: ["a blockquote\ncontinues here"]}]}]
+      assert_equal  Parser.parse(input1)[:content], target1
+
+      input2  = "> a blockquote\n> continues here too"
+      target2 = [{ tag: 'blockquote', content: [{ tag: 'p', content: ["a blockquote\ncontinues here too"]}]}]
+      assert_equal  Parser.parse(input2)[:content], target2
+
+      input3  = "> a blockquote\n> continues here\n\nbut not here"
+      target3 = [{ tag: 'blockquote', content: [{ tag: 'p', content: ["a blockquote\ncontinues here"]}]}, { tag: 'p', content: ['but not here']}]
+      assert_equal  Parser.parse(input3)[:content], target3
     end
   end
 
