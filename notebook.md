@@ -546,3 +546,27 @@ code blocks are consecutive lines that start with 4 or more spaces
     \n\n\n\narray.reverse -> <pre><code>array.reverse</code></pre>
 
 Done. Things are getting a bit hacky. Might need to refactor a bit on the next session.
+
+
+# IDEA
+
+    fn -> MDString -> Node
+    fn -> Node -> HTMLString
+
+Have a function for each entity? each function knows how to transform one entity only
+
+
+# 2017-05-26
+
+Do we have a markdown parser yet? I mean can we use it as a tool from the command line?
+
+No.
+
+Ok then do that next. It doesn't matter if it is not complete, remember that the idea is to always have a working program. No matter how simple it might be.
+
+# 2017-05-31
+
+next: program that takes an input from STDIN or File
+
+Done
+

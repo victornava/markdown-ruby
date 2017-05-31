@@ -1,3 +1,5 @@
+require 'pry'
+
 class Markdown
   class << self
     def to_html(md)
@@ -175,9 +177,28 @@ class Generator
   end
 end
 
+def log(message)
+  # puts message
+end
+
+def main
+  input = ARGV.any? ? File.read(ARGV.first) : STDIN.read
+  puts Markdown.to_html(input)
+  exit
+end
+
+if ARGV.include?('--test')
+  ARGV.shift
+else
+  main
+end
+
 ########################################################################
 # TEST
 ########################################################################
+
+require 'minitest/spec'
+require 'minitest/autorun'
 
 SIMPLE_PARSE_TREE = {
   tag: "html",
@@ -222,12 +243,6 @@ SIMPLE_PARSE_TREE = {
     ]}
   ]
 }
-
-# log Generator.process_node(SIMPLE_PARSE_TREE)
-
-# Test
-require 'pry'
-require 'minitest/spec'
 
 class MardownTest < Minitest::Spec
   describe Generator do
@@ -403,10 +418,3 @@ class String
     gsub(/^#{scan(/^[ \t]*(?=\S)/).min}/, "".freeze)
   end
 end
-
-def log(message)
-  # puts message
-end
-
-require 'minitest/autorun'
-# puts Markdown.to_html(File.read('example.md'))
