@@ -1,10 +1,12 @@
 # Markdown Ruby
 
-A minimal markdown implementation in ruby.
+An implementation of markdown (subset) in Ruby. For learning purposes.
 
-Work in progress...
+The idea is to figure out how to make a rudimentary markdown to html converter, before learning about parsers.
 
-# TODO
+I intent to write another version as a "proper" parser. Once I read about them.
+
+## TODO
 
 - [x] Paragraphs
 - [x] Line Breaks
@@ -19,17 +21,22 @@ Work in progress...
 - [x] Images
 - [ ] Leave empty lines intact?
 - [ ] test against https://daringfireball.net/projects/markdown/syntax ?
-- [ ] Embedded HTML?
 
-## Scope
+## Subset of markdown means...
 
-In cases where might be more than one way of doing things, we handle a single case of:
+### Only one way of representing
 
-- Headers with hashes # H1, ## H2...###### H6
-- Unordered lists with dash: `-`
-- Strong with double stars `**bold**`
-- Emphasis with single underscores: `_italic_`
-- Horizontal rule with `---`
+- Headers: # H1, ## H2...###### H6
+- Unordered lists: `-`
+- Strong: `**bold**`
+- Emphasis: `_italic_`
+- Horizontal rules: `---`
+
+### Not Support
+
+- Reference links
+- Embedded HTML
+- Automatic links
 
 ## Notebook
 

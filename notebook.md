@@ -586,3 +586,17 @@ Done
 
 Next is more complex scenarios, maybe examples from https://daringfireball.net/projects/markdown/syntax
 
+# 2017-06-15
+
+Where are we at?
+
+I've decided to leave out embedded html and reference links. I've never use those features and have never seen it use anywhere.
+
+So we're done with:
+
+- Supporting all tags
+- Integration testing with a very simple input
+
+There are several places in the code with questions and todos.
+
+So let's fix that.

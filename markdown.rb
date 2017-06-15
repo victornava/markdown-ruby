@@ -29,7 +29,7 @@ class Parser
       { tag: 'ol'        , regexp: /^\s*(\d+\..*)(?!=\d+\.\])/m }, # 🤔 looks wrong
       { tag: 'hr'        , regexp: /^\-\-\-+$/                  },
       { tag: 'code_block', regexp: /(^\ {4,}.*)+/m              }, # 🤔 produces pre and code tags
-      { tag: 'blockquote', regexp: /^\s?\>\s?.*$/m            }, # 🤔 produces blockquote and p tags
+      { tag: 'blockquote', regexp: /^\s?\>\s?.*$/m              }, # 🤔 produces blockquote and p tags
       { tag: 'p'         , regexp: /(.*)/m                      }, # 🤔 too open?
     ]
 
@@ -175,8 +175,7 @@ class Generator
     end
 
     def after_close_tag(node)
-      return "\n" if BLOCK_TAGS.include?(node[:tag])
-      return "\n" if %w[li br hr].include?(node[:tag])
+      return "\n" if (BLOCK_TAGS + %w[li br hr]).include?(node[:tag])
     end
   end
 end
@@ -252,8 +251,7 @@ class MardownTest < Minitest::Spec
   describe Generator do
     it "generates html from a simple parse_tree" do
       target = File.read('./example-simple.html')
-      # File.open('test-out.html', 'w').write(Generator.generate(SIMPLE_PARSE_TREE))
-      Generator.generate(SIMPLE_PARSE_TREE).must_equal(target)
+      assert_equal target, Generator.generate(SIMPLE_PARSE_TREE)
     end
 
     it 'simple tag test' do
@@ -276,7 +274,7 @@ class MardownTest < Minitest::Spec
         [{ tag: "br"                                 }, "<br>\n"                           ],
         [{ tag: "hr"                                 }, "<hr>\n"                           ],
       ].each do |input, target|
-        Generator.generate(input).must_equal(target)
+        assert_equal target, Generator.generate(input), "#{input} should produce #{target}"
       end
     end
 
@@ -297,7 +295,7 @@ class MardownTest < Minitest::Spec
         </ul>
       HTML
 
-      Generator.generate(input).must_equal(target)
+      assert_equal target, Generator.generate(input)
     end
 
     it 'generate ordered lists' do
@@ -317,12 +315,13 @@ class MardownTest < Minitest::Spec
         </ol>
       HTML
 
-      Generator.generate(input).must_equal(target)
+      assert_equal target, Generator.generate(input)
     end
 
     it 'generates links' do
-      Generator.generate({ tag: "a", content: "link", props: { href: "http://example.com" } })
-               .must_equal('<a href="http://example.com">link</a>')
+      input  = { tag: "a", content: "link", props: { href: "http://example.com" } }
+      target = '<a href="http://example.com">link</a>'
+      assert_equal target, Generator.generate(input)
     end
 
     it 'generates images' do
@@ -331,7 +330,7 @@ class MardownTest < Minitest::Spec
         props: { src: 'http://daringfireball.net/graphics/logos/', alt: 'Gruber', title: '' }
       }
       target = '<img src="http://daringfireball.net/graphics/logos/" alt="Gruber" title="">'
-      Generator.generate(input).must_equal(target)
+      assert_equal target, Generator.generate(input)
     end
   end
 
@@ -372,7 +371,7 @@ class MardownTest < Minitest::Spec
         ]
       }]
 
-      Parser.parse(input)[:content].must_equal(target)
+      assert_equal target, Parser.parse(input)[:content]
     end
 
     it 'parses simple ordered lists' do
@@ -390,29 +389,28 @@ class MardownTest < Minitest::Spec
         ]
       }]
 
-      Parser.parse(input)[:content].must_equal(target)
+      assert_equal target, Parser.parse(input)[:content]
     end
 
     it 'parses code blocks' do
       input   = "    def a_code_block\n" + "      print \"looks like this\"\n" + "    end\n"
       content = "def a_code_block\n" + "  print \"looks like this\"\n" + "end"
-
-      target = [{ tag: 'pre', content: [{ tag: 'code', content: [content]}]}]
+      target  = [{ tag: 'pre', content: [{ tag: 'code', content: [content]}]}]
       assert_equal target, Parser.parse(input)[:content]
     end
 
     it 'parses multiline blockquotes' do
       input1  = "> a blockquote\ncontinues here"
       target1 = [{ tag: 'blockquote', content: [{ tag: 'p', content: ["a blockquote\ncontinues here"]}]}]
-      assert_equal  Parser.parse(input1)[:content], target1
+      assert_equal target1, Parser.parse(input1)[:content]
 
       input2  = "> a blockquote\n> continues here too"
       target2 = [{ tag: 'blockquote', content: [{ tag: 'p', content: ["a blockquote\ncontinues here too"]}]}]
-      assert_equal  Parser.parse(input2)[:content], target2
+      assert_equal target2, Parser.parse(input2)[:content]
 
       input3  = "> a blockquote\n> continues here\n\nbut not here"
       target3 = [{ tag: 'blockquote', content: [{ tag: 'p', content: ["a blockquote\ncontinues here"]}]}, { tag: 'p', content: ['but not here']}]
-      assert_equal  Parser.parse(input3)[:content], target3
+      assert_equal target3, Parser.parse(input3)[:content]
     end
   end
 
