@@ -21,6 +21,7 @@ I intent to write another version as a "proper" parser. Once I read about them.
 - [x] Images
 - [ ] Leave empty lines intact?
 - [ ] test against https://daringfireball.net/projects/markdown/syntax ?
+- [ ] scape special characters?
 
 ## Subset of markdown means...
 

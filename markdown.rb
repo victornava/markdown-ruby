@@ -1,4 +1,4 @@
-require 'pry'
+# require 'pry'
 
 class Markdown
   class << self
@@ -19,30 +19,31 @@ class Parser
 
     # Order important here. Chunks get converted to paragraphs if they don't match anything else
     BLOCK_MATCHERS = [
-      { tag: 'h1'        , regexp: /^#[^#](.*)(?=$)/            },
-      { tag: 'h2'        , regexp: /^##[^#](.*)(?=$)/           },
-      { tag: 'h3'        , regexp: /^###[^#](.*)(?=$)/          },
-      { tag: 'h4'        , regexp: /^####[^#](.*)(?=$)/         },
-      { tag: 'h5'        , regexp: /^#####[^#](.*)(?=$)/        },
-      { tag: 'h6'        , regexp: /^######\s*(.*)(?=$)/        },
-      { tag: 'ul'        , regexp: /^\s*(\-[^-]+.*)(?!=\-\])/m  }, # 🤔 looks wrong
-      { tag: 'ol'        , regexp: /^\s*(\d+\..*)(?!=\d+\.\])/m }, # 🤔 looks wrong
-      { tag: 'hr'        , regexp: /^\-\-\-+$/                  },
-      { tag: 'code_block', regexp: /(^\ {4,}.*)+/m              }, # 🤔 produces pre and code tags
-      { tag: 'blockquote', regexp: /^\s?\>\s?.*$/m              }, # 🤔 produces blockquote and p tags
-      { tag: 'p'         , regexp: /(.*)/m                      }, # 🤔 too open?
+      { tag: 'h1'        , regexp: /^#[^#](.*)(?=$)/            , handler: '_generic'    },
+      { tag: 'h2'        , regexp: /^##[^#](.*)(?=$)/           , handler: '_generic'    },
+      { tag: 'h3'        , regexp: /^###[^#](.*)(?=$)/          , handler: '_generic'    },
+      { tag: 'h4'        , regexp: /^####[^#](.*)(?=$)/         , handler: '_generic'    },
+      { tag: 'h5'        , regexp: /^#####[^#](.*)(?=$)/        , handler: '_generic'    },
+      { tag: 'h6'        , regexp: /^######\s*(.*)(?=$)/        , handler: '_generic'    },
+      { tag: 'ul'        , regexp: /^\s*(\-[^-]+.*)(?!=\-\])/m  , handler: '_generic'    }, # 🤔 looks wrong
+      { tag: 'ol'        , regexp: /^\s*(\d+\..*)(?!=\d+\.\])/m , handler: '_generic'    }, # 🤔 looks wrong
+      { tag: 'hr'        , regexp: /^\-\-\-+$/                  , handler: '_generic'    },
+      { tag: 'code_block', regexp: /(^\ {4,}.*)+/m              , handler: '_code_block' }, # 🤔 produces pre and code tags
+      { tag: 'blockquote', regexp: /^\s?\>\s?.*$/m              , handler: '_blockquote' }, # 🤔 produces blockquote and p tags
+      { tag: 'p'         , regexp: /(.*)/m                      , handler: '_generic'    }, # 🤔 too open?
     ]
 
     INLINE_MATCHERS = [
-      { tag: 'code'  , regexp: /`+(.*)`+/                },
-      { tag: 'li'    , regexp: /^\s*\-\s+(.*)\n?$/       },
-      { tag: 'li'    , regexp: /^\s*\d+\.\s?(.*)\n?$/    },
-      { tag: 'strong', regexp: /\*\*(.*)\*\*/            },
-      { tag: 'em'    , regexp: /_(.*)_/                  },
-      { tag: 'a'     , regexp: /(?<!\!)\[(.*)\]\((.*)\)/ },
-      { tag: 'img'   , regexp: /\!\[(.*)\]\((.*)\)/      },
+      { tag: 'code'      , regexp: /`+(.*)`+/                   , handler: '_generic'    },
+      { tag: 'li'        , regexp: /^\s*\-\s+(.*)\n?$/          , handler: '_generic'    },
+      { tag: 'li'        , regexp: /^\s*\d+\.\s?(.*)\n?$/       , handler: '_generic'    },
+      { tag: 'strong'    , regexp: /\*\*(.*)\*\*/               , handler: '_generic'    },
+      { tag: 'em'        , regexp: /_(.*)_/                     , handler: '_generic'    },
+      { tag: 'a'         , regexp: /(?<!\!)\[(.*)\]\((.*)\)/    , handler: '_link'       },
+      { tag: 'img'       , regexp: /\!\[(.*)\]\((.*)\)/         , handler: '_image'      },
     ]
 
+    # 🤔 this step shouldn't be required
     def split_into_chunks(markdown)
       markdown
         .split(/^\s*$/)                      # split by empty lines
@@ -60,49 +61,46 @@ class Parser
     def chunks_to_nodes(chunks, matchers)
       matchers.reduce(chunks) do |chunks, matcher|
         chunks.flat_map do |chunk|
-          chunk_to_nodes(chunk, matcher[:tag], matcher[:regexp])
+          chunk_to_nodes(chunk, matcher[:tag], matcher[:regexp], matcher[:handler])
         end
       end
     end
 
-    def chunk_to_nodes(chunk, tag, regexp)
+    def chunk_to_nodes(chunk, tag, regexp, handler)
       return chunk unless chunk.is_a?(String)
-      if chunk.empty?
-        []
-      else
-        before, match, rest =  chunk.partition(regexp)
-        log "Match (#{chunk.inspect}) as (#{tag}) with (#{regexp}) "
-        if match.empty?
-          log "❌"
-          [chunk]
-        else
-          log "✅"
-          log "Trying to find inlines..."
-          node = case tag
-          when 'a'
-            { tag: tag, content: split_into_inlines(chunk[regexp, 1]), props: { href: chunk[regexp, 2] }}
-          when 'img'
-            { tag: tag, props: { src: chunk[regexp, 2], alt: chunk[regexp, 1], title: "" }}
-          when 'code_block'
-            # 🤔 produces 2 block tags
-            content = chunk[regexp].gsub(/^ {4}/,'') # 🤔 hack?
-            { tag: 'pre', content: [{ tag: 'code', content: [content]}]}
-          when 'blockquote'
-            # 🤔 produces 2 block tags
-            content = chunk[regexp].gsub(/^\s?\>\s?/, '') # 🤔 hack?
-            { tag: 'blockquote', content: [{ tag: 'p', content: [content]}]} # 🤔 why content needs to array?
-          else
-            { tag: tag, content: split_into_inlines(chunk[regexp, 1]) }
-          end
+      return [] if chunk.empty?
 
-          log "Done with inlines node is: #{node.inspect}"
-          if before.chomp.empty?
-            [node].concat(chunk_to_nodes(rest, tag, regexp))
-          else
-            [before, node].concat(chunk_to_nodes(rest, tag, regexp))
-          end
-        end
+      before, match, rest =  chunk.partition(regexp)
+
+      if match.empty?
+        [chunk]
+      else
+        node = self.send(handler, tag, chunk, regexp)
+        node_list = before.chomp.empty? ? [node] : [before, node]
+        node_list.concat(chunk_to_nodes(rest, tag, regexp, handler))
       end
+    end
+
+    def _generic(tag, chunk, regexp)
+      { tag: tag, content: split_into_inlines(chunk[regexp, 1]) }
+    end
+
+    def _link(tag, chunk, regexp)
+      { tag: tag, content: split_into_inlines(chunk[regexp, 1]), props: { href: chunk[regexp, 2] }}
+    end
+
+    def _image(tag, chunk, regexp)
+      { tag: tag, props: { src: chunk[regexp, 2], alt: chunk[regexp, 1], title: "" }}
+    end
+
+    def _code_block(tag, chunk, regexp)
+      content = chunk[regexp].gsub(/^ {4}/,'') # 🤔 hack?
+      { tag: 'pre', content: [{ tag: 'code', content: [content]}]}
+    end
+
+    def _blockquote(tag, chunk, regexp)
+      content = chunk[regexp].gsub(/^\s?\>\s?/, '') # 🤔 hack?
+      { tag: 'blockquote', content: [{ tag: 'p', content: [content]}]} # 🤔 why content needs to be array?
     end
   end
 end
@@ -420,7 +418,7 @@ class MardownTest < Minitest::Spec
         input  = File.read('example.md')
         target = File.read('example.html')
         output = Markdown.to_html(input)
-        File.write('out.html', output)
+        # File.write('out.html', output)
         assert_equal target, output
       end
     end

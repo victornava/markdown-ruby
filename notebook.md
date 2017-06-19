@@ -459,7 +459,7 @@ in this case we could transform the regexp to
     ^\s*\-(?!=\-) end:     same as start
     /
 
-# TODO Can we generalize this and say:
+# 💡 Can we generalize this and say:
 
 > A regular expresion to parse a chunk of text has three parts: start, content and end
 
@@ -548,13 +548,12 @@ code blocks are consecutive lines that start with 4 or more spaces
 Done. Things are getting a bit hacky. Might need to refactor a bit on the next session.
 
 
-# IDEA
+#  💡 Typed strings?
 
     fn -> MDString -> Node
     fn -> Node -> HTMLString
 
 Have a function for each entity? each function knows how to transform one entity only
-
 
 # 2017-05-26
 
@@ -600,3 +599,28 @@ So we're done with:
 There are several places in the code with questions and todos.
 
 So let's fix that.
+
+The `chunk_to_nodes` is in really bad shape, let's give it some love. Think what needs to happen here to make little functions/methods that handle only one tag.
+
+We have need to handle all these:
+
+     h1, h2, h3, h4, h5, h6, ul, ol, hr, code_block, blockquote, p, code, li, li, stron, em, a, img
+
+we can group headings and lists
+
+    headings (1 to 6)
+    lists (ul and ol)
+    hr
+    code_block
+    blockquote
+    p
+    code
+    li (ul and ol)
+    strong
+    em
+    a
+    img
+
+o-right let's get cracking...start with headings
+
+That's done. It can be cleanup a bit more but it's good enough for now.
