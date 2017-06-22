@@ -1,10 +1,10 @@
-# Markdown Ruby
+# Submark
 
-An implementation of markdown (subset) in Ruby. For learning purposes.
+A markdown (subset) to HTML converter.
 
-The idea is to figure out how to make a rudimentary markdown to html converter, before learning about parsers.
+I have no idea how parsers work. So I'm doing this as programming exercice to learn about them.
 
-I intent to write another version as a "proper" parser. Once I read about them.
+The idea is to figure out how to make a rudimentary markdown to html converter, before learning about parsers. Then write another version as a "proper" parser. Once I read about them.
 
 ## TODO
 
@@ -33,7 +33,7 @@ I intent to write another version as a "proper" parser. Once I read about them.
 - Emphasis: `_italic_`
 - Horizontal rules: `---`
 
-### Not Support
+### Not Supported
 
 - Reference links
 - Embedded HTML

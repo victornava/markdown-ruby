@@ -1,6 +1,6 @@
 require 'minitest/spec'
 require 'minitest/autorun'
-require_relative 'markdown'
+require_relative 'submark'
 
 SIMPLE_PARSE_TREE = {
  tag: "html", content: 
@@ -221,12 +221,12 @@ class MardownTest < Minitest::Spec
     end
   end
 
-  describe Markdown do
+  describe Submark do
     describe '.to_html' do
       it 'converts markdown to html' do
         input  = File.read('example.md')
         target = File.read('example.html')
-        output = Markdown.to_html(input)
+        output = Submark.to_html(input)
         assert_equal target, output
       end
     end

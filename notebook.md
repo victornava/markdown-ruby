@@ -628,3 +628,23 @@ That's done. It can be cleanup a bit more but it's good enough for now.
 # 2017-06-19
 
 Just moved the test code to its own file.
+
+
+find some markdown example locally
+
+    mdfind -onlyin ~/ 'NOTEBOOK.md' | mate
+
+then grab the file name with
+
+    (?<=\/)[^\/]+(?=\/readme.md$)
+
+then for each file:
+
+    mkdir -p examples
+    cp FULL_PATH examples/file.md
+
+
+then convert them all to html
+
+    cd examples
+    ls | ruby -e 'STDIN.each_line.map(&:chomp).map {|l| "../markdown.rb #{l} > #{l.gsub(".md","")}.html"}'

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-class Markdown
+class Submark
   class << self
     def to_html(md)
       Generator.generate(Parser.parse(md))
@@ -10,10 +10,10 @@ end
 
 class Parser
   class << self
-    def parse(markdown)
+    def parse(submark)
       {
         tag: 'html',
-        content: split_into_blocks(split_into_chunks(markdown))
+        content: split_into_blocks(split_into_chunks(submark))
       }
     end
 
@@ -28,8 +28,8 @@ class Parser
       { tag: 'ul'        , regexp: /^\s*(\-[^-]+.*)(?!=\-\])/m  , handler: '_generic'    }, # 🤔 looks wrong
       { tag: 'ol'        , regexp: /^\s*(\d+\..*)(?!=\d+\.\])/m , handler: '_generic'    }, # 🤔 looks wrong
       { tag: 'hr'        , regexp: /^\-\-\-+$/                  , handler: '_generic'    },
-      { tag: 'code_block', regexp: /(^\ {4,}.*)+/m              , handler: '_code_block' }, # 🤔 produces pre and code tags
-      { tag: 'blockquote', regexp: /^\s?\>\s?.*$/m              , handler: '_blockquote' }, # 🤔 produces blockquote and p tags
+      { tag: 'code_block', regexp: /(^\ {4,}.*)+/m              , handler: '_code_block' }, # 🤔 code_block is not a tag!
+      { tag: 'blockquote', regexp: /^\s?\>\s?.*$/m              , handler: '_blockquote' },
       { tag: 'p'         , regexp: /(.*)/m                      , handler: '_generic'    }, # 🤔 too open?
     ]
 
@@ -43,9 +43,9 @@ class Parser
       { tag: 'img'       , regexp: /\!\[(.*)\]\((.*)\)/         , handler: '_image'      },
     ]
 
-    # 🤔 this step shouldn't be required
-    def split_into_chunks(markdown)
-      markdown
+    # 🐞 breaks block matchers that have empty lines 😅
+    def split_into_chunks(submark)
+      submark
         .split(/^\s*$/)                      # split by empty lines
         .map { |x| x.gsub(/^\n+|\n+$/, '') } # remove new lines from start or end
     end
@@ -94,12 +94,12 @@ class Parser
     end
 
     def _code_block(tag, chunk, regexp)
-      content = chunk[regexp].gsub(/^ {4}/,'') # 🤔 hack?
+      content = chunk[regexp].gsub(/^ {4}/,'') # 🤔 Should be handled with look-behind in the regexp
       { tag: 'pre', content: [{ tag: 'code', content: [content]}]}
     end
 
     def _blockquote(tag, chunk, regexp)
-      content = chunk[regexp].gsub(/^\s?\>\s?/, '') # 🤔 hack? yes. Shuold handle with look-behind in the regexp
+      content = chunk[regexp].gsub(/^\s?\>\s?/, '') # 🤔 Should be handled with look-behind in the regexp
       { tag: 'blockquote', content: [{ tag: 'p', content: [content]}]} # 🤔 why content needs to be array?
     end
   end
@@ -180,7 +180,7 @@ end
 
 def main
   input = ARGV.any? ? File.read(ARGV.first) : STDIN.read
-  puts Markdown.to_html(input)
+  puts Submark.to_html(input)
 end
 
 main if $0 == __FILE__
