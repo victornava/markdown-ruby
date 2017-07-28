@@ -25,12 +25,12 @@ class Parser
       { tag: 'h4'        , regexp: /^####[^#](.*)(?=$)/         , handler: '_generic'    },
       { tag: 'h5'        , regexp: /^#####[^#](.*)(?=$)/        , handler: '_generic'    },
       { tag: 'h6'        , regexp: /^######\s*(.*)(?=$)/        , handler: '_generic'    },
-      { tag: 'ul'        , regexp: /^\s*(\-[^-]+.*)(?!=\-\])/m  , handler: '_generic'    }, # 🤔 looks wrong
-      { tag: 'ol'        , regexp: /^\s*(\d+\..*)(?!=\d+\.\])/m , handler: '_generic'    }, # 🤔 looks wrong
+      { tag: 'ul'        , regexp: /^\s*(\-[^-]+.*)(?!=\-\])/m  , handler: '_generic'    },
+      { tag: 'ol'        , regexp: /^\s*(\d+\..*)(?!=\d+\.\])/m , handler: '_generic'    },
       { tag: 'hr'        , regexp: /^\-\-\-+$/                  , handler: '_generic'    },
-      { tag: 'code_block', regexp: /(^\ {4,}.*)+/m              , handler: '_code_block' }, # 🤔 code_block is not a tag!
+      { tag: 'code_block', regexp: /(^\ {4,}.*)+/m              , handler: '_code_block' },
       { tag: 'blockquote', regexp: /^\s?\>\s?.*$/m              , handler: '_blockquote' },
-      { tag: 'p'         , regexp: /(.*)/m                      , handler: '_generic'    }, # 🤔 too open?
+      { tag: 'p'         , regexp: /(.*)/m                      , handler: '_generic'    },
     ]
 
     INLINE_MATCHERS = [
@@ -94,13 +94,13 @@ class Parser
     end
 
     def _code_block(tag, chunk, regexp)
-      content = chunk[regexp].gsub(/^ {4}/,'') # 🤔 Should be handled with look-behind in the regexp
+      content = chunk[regexp].gsub(/^ {4}/,'')
       { tag: 'pre', content: [{ tag: 'code', content: [content]}]}
     end
 
     def _blockquote(tag, chunk, regexp)
-      content = chunk[regexp].gsub(/^\s?\>\s?/, '') # 🤔 Should be handled with look-behind in the regexp
-      { tag: 'blockquote', content: [{ tag: 'p', content: [content]}]} # 🤔 why content needs to be array?
+      content = chunk[regexp].gsub(/^\s?\>\s?/, '')
+      { tag: 'blockquote', content: [{ tag: 'p', content: [content]}]}
     end
   end
 end

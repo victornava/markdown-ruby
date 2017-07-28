@@ -33,5 +33,7 @@ A [link](http://example.com).
 An image ![Gruber](http://daringfireball.net/graphics/logos/)
 
     def a_code_block
+      
       "looks like this"
+      
     end

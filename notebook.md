@@ -648,3 +648,46 @@ then convert them all to html
 
     cd examples
     ls | ruby -e 'STDIN.each_line.map(&:chomp).map {|l| "../markdown.rb #{l} > #{l.gsub(".md","")}.html"}'
+
+# 2017-07-27
+
+One big bug we have right now is that:
+
+We don't convert code blocks properly when they have new lines:
+
+For example:
+
+    this is a code block
+    
+    with a new line
+
+should be converted to:
+
+    <pre><code>this is a code block
+    
+    with a new line
+    </code></pre>
+
+But is doing:
+
+    <pre><code>this is a code block</code></pre><pre><code>with a new line</code></pre>
+
+The reason this is happening is because the we are spliting the input into chunks (text separated by one or more empty lines) before we process code blocks. So we need to get rid of that step.
+
+The inial assumption was:
+
+> Block elements don't have empty lines in it.
+
+So the approch was:
+
+> first split everything by empty lines (chunks) then go try to identify blocks using their regexp, if nothing matches a block, then the chunk is a paragraph.
+
+But now we know that blocks can span multiple "chunks"...
+
+The approach I'm using is getting super complicated, so I'm going to stop here.
+
+I just checked the output visually and it actually looks alright. Yeah, a code block with empty lines generates multiple code elements but it looks as if it was one anyway.
+
+This is good enought for the exersice.
+
+Next: implementation it again using a proper parser with a grammar etc.

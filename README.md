@@ -6,7 +6,11 @@ I have no idea how parsers work. So I'm doing this as programming exercice to le
 
 The idea is to figure out how to make a rudimentary markdown to html converter, before learning about parsers. Then write another version as a "proper" parser. Once I read about them.
 
-## TODO
+## Usage
+
+    $ ruby submark.rb example.md
+
+## Done
 
 - [x] Paragraphs
 - [x] Line Breaks
@@ -19,9 +23,6 @@ The idea is to figure out how to make a rudimentary markdown to html converter, 
 - [x] Emphasis
 - [x] Links
 - [x] Images
-- [ ] Leave empty lines intact?
-- [ ] test against https://daringfireball.net/projects/markdown/syntax ?
-- [ ] scape special characters?
 
 ## Subset of markdown means...
 
@@ -41,4 +42,4 @@ The idea is to figure out how to make a rudimentary markdown to html converter, 
 
 ## Notebook
 
-The [Notebook](./notebook.md) is [here](./notebook.md)
+Here is a [notebook](./notebook.md) with notes about the process and approach taken. 
